@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>Tracker Financiero Trimestral</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --orange-brand: #ff9800;
+      --input-bg: #0f172a;
+      --radius: 12px;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body.light-theme {
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --input-bg: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font);
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 20px));
+      line-height: 1.4;
+      -webkit-tap-highlight-color: transparent;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0;
+      padding: 0 12px;
+    }
+
+    header.sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--bg-color);
+      border-bottom: none;
+      padding-top: 15px;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    .header-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .theme-toggle-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-grid-minimal {
+      display: flex;
+      gap: 8px;
+    }
+
+    .stat-card-quarter {
+      flex: 1.2;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      min-width: 0;
+    }
+
+    .stat-card-income {
+      flex: 1.8;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-card-quarter label, .stat-card-income label {
+      display: block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .stat-card-quarter select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .income-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .income-input-editable {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 1.1rem;
+      font-weight: 800;
+      outline: none;
+      min-width: 0;
+      border-bottom: 1px dashed transparent;
+    }
+
+    .income-input-editable:focus {
+      border-bottom-color: var(--primary);
+    }
+
+    .income-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-undo {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .btn-undo:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-add-income {
+      background: var(--orange-brand);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .stat-card-quarter select option {
+      background: var(--card-bg);
+      color: var(--text-main);
+    }
+
+    .global-summary-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .global-summary-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .global-summary-item span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .global-summary-item.full-width {
+      grid-column: span 2;
+      border-top: 1px solid var(--card-border);
+      padding-top: 8px;
+      margin-top: 4px;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .global-summary-item.full-width strong {
+      font-size: 1.15rem;
+      color: var(--danger);
+    }
+
+    .percentage-bar-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .percentage-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .pct-status-badge {
+      background-color: #38bdf8;
+      color: #0f172a !important;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    body.light-theme .pct-status-badge {
+      background-color: #0284c7;
+      color: #ffffff !important;
+    }
+
+    .pct-status-badge.status-ok { background-color: #10b981; color: #042f2e !important; }
+    .pct-status-badge.status-warning { background-color: #f59e0b; color: #451a03 !important; }
+    .pct-status-badge.status-danger { background-color: #ef4444; color: #450a0a !important; }
+
+    .progress-outer {
+      width: 100%;
+      height: 10px;
+      background: var(--card-border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .progress-inner {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .status-ok-bar { background-color: var(--success); }
+    .status-warning-bar { background-color: var(--warning); }
+    .status-danger-bar { background-color: var(--danger); }
+
+    .categories-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .category-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cat-title-input {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 1rem;
+      font-weight: 700;
+      width: 100%;
+      outline: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .cat-title-input:focus {
+      border-bottom-color: var(--primary);
+    }
+
+    .pct-input-group {
+      display: flex;
+      align-items: center;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 4px 6px;
+      min-width: 70px;
+    }
+
+    .pct-input-group input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      text-align: right;
+      font-weight: 600;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .cat-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: var(--input-bg);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+    }
+
+    .cat-summary div span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+    }
+
+    .cat-summary div strong {
+      font-size: 0.85rem;
+    }
+
+    .total-highlight {
+      color: var(--orange-brand) !important;
+      font-weight: 800;
+      display: block;
+      font-size: 0.75rem;
+      margin-top: 2px;
+    }
+
+    .extra-notes {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .extra-notes label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .extra-notes textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      resize: vertical;
+      min-height: 44px;
+      outline: none;
+    }
+
+    .movements-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .movement-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .movement-item {
+      display: flex;
+      align-items: center;
+      background: var(--input-bg);
+      padding: 4px 6px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      gap: 4px;
+    }
+
+    .movement-item.plus { border-left: 3px solid var(--success); }
+    .movement-item.minus { border-left: 3px solid var(--danger); }
+
+    .mov-type-select {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      outline: none;
+      padding: 2px;
+    }
+
+    .mov-type-select option {
+      background: var(--card-bg);
+      color: var(--text-main);
+    }
+
+    .mov-desc-input {
+      flex-grow: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.8rem;
+      outline: none;
+      min-width: 0;
+      border-bottom: 1px solid transparent;
+    }
+
+    .mov-desc-input:focus {
+      border-bottom-color: var(--primary);
+    }
+
+    .mov-amount-input {
+      width: 70px;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-align: right;
+      outline: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .mov-amount-input:focus {
+      border-bottom-color: var(--primary);
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 4px;
+    }
+
+    .mov-form {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .mov-form select {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .mov-form select option {
+      background: var(--card-bg);
+      color: var(--text-main);
+    }
+
+    .mov-form input[type="text"] {
+      flex-grow: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      width: 40%;
+    }
+
+    .mov-form input[type="number"] {
+      width: 75px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+
+    .btn-add {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .actions-bar {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .export-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-main {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      text-align: center;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      text-align: center;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .btn-danger-outline {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 10px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      text-align: center;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .btn-delete-cat {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 2px 6px;
+      cursor: pointer;
+    }
+
+    /* Modal emergente para agregar ingresos */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-content h3 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+
+    .modal-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-modal-cancel {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-modal-submit {
+      background: var(--orange-brand);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="sticky-header">
+    <div class="container">
+      <div class="header-top-row">
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tracker Financiero</span>
+        <button class="theme-toggle-btn" onclick="toggleTheme()">
+          <span id="theme-icon">🌙</span> <span id="theme-text">Modo Oscuro</span>
+        </button>
+      </div>
+      <div class="header-grid-minimal">
+        <div class="stat-card-quarter">
+          <label for="quarter-select">Trimestre</label>
+          <select id="quarter-select" onchange="changeQuarter(this.value)">
+            <option value="Q1">Ene - Feb - Mar (Q1)</option>
+            <option value="Q2">Abr - May - Jun (Q2)</option>
+            <option value="Q3">Jul - Ago - Sep (Q3)</option>
+            <option value="Q4">Oct - Nov - Dic (Q4)</option>
+          </select>
+        </div>
+
+        <div class="stat-card-income">
+          <label>INGRESO (€)</label>
+          <div class="income-row">
+            <input type="number" inputmode="decimal" step="0.01" class="income-input-editable" id="income-input-editable" onchange="updateIncomeDirectly(this.value)">
+            <div class="income-actions">
+              <button class="btn-undo" id="btn-undo" onclick="undoIncomeChange()" title="Deshacer cambio de ingreso" disabled>↩</button>
+              <button class="btn-add-income" onclick="openIncomeModal()">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="global-summary-card">
+      <div style="border:none; padding:0; background:transparent;">
+        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">Capital Inicial (€)</span>
+        <input type="number" inputmode="decimal" step="0.01" id="initial-cap-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateInitialCap(this.value)">
+      </div>
+      <div style="border:none; padding:0; background:transparent;">
+        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">Saldo en Banco (€)</span>
+        <input type="number" inputmode="decimal" step="0.01" id="bank-balance-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateBankBalanceManual(this.value)">
+      </div>
+      
+      <div class="global-summary-item full-width">
+        <span>Gasto Total Acumulado:</span>
+        <strong id="total-global-spent">0,00 €</strong>
+      </div>
+    </section>
+
+    <section class="percentage-bar-container">
+      <div class="percentage-header">
+        <span>Distribución Porcentual</span>
+        <span id="percentage-status-text" class="pct-status-badge">100% asignado</span>
+      </div>
+      <div class="progress-outer">
+        <div id="percentage-progress" class="progress-inner status-ok-bar" style="width: 100%;"></div>
+      </div>
+    </section>
+
+    <section id="categories-container" class="categories-grid"></section>
+
+    <section class="actions-bar">
+      <button class="btn-main" onclick="addCategory()">+ Añadir Categoría</button>
+      
+      <div class="export-group">
+        <button class="btn-secondary" onclick="exportToCSV()">📊 Exportar CSV</button>
+        <button class="btn-secondary" onclick="exportToPDF()">📄 Abrir / Guardar PDF</button>
+      </div>
+
+      <button class="btn-danger-outline" onclick="resetCurrentQuarterData()">Restablecer Trimestre Actual</button>
+    </section>
+  </main>
+
+  <!-- Modal para Agregar Ingreso -->
+  <div id="income-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Agregar al Ingreso (€)</h3>
+      <input type="number" inputmode="decimal" step="0.01" id="income-add-input" class="modal-input" placeholder="0.00">
+      <div class="modal-buttons">
+        <button class="btn-modal-cancel" onclick="closeIncomeModal()">Cancelar</button>
+        <button class="btn-modal-submit" onclick="submitAddIncome()">Agregar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_Q3_DATA = {
+      income: 14890.66,
+      initialCapital: 10.26,
+      bankBalance: 77.28,
+      categories: [
+        { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [] },
+        { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [] },
+        { id: "cat-inversion", name: "5% inversión", percentage: 5, customNote: "DEGIRO", movements: [{ id: "m1", type: "+", amount: 170.00, desc: "DEGIRO" }] },
+        { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "Ahorros / Carnet de conducir (rijbewijs)", movements: [{ id: "m2", type: "+", amount: 1600.00, desc: "ahorros" }, { id: "m3", type: "-", amount: 1500.00, desc: "rijbewijs" }, { id: "m4", type: "+", amount: 400.00, desc: "para la cuenta de ahorro" }] },
+        { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [{ id: "m5", type: "-", amount: 10.00, desc: "visita al Palacio Real" }, { id: "m6", type: "-", amount: 58.51, desc: "salida con Airah al evento 'Prodigy12'" }, { id: "m7", type: "-", amount: 20.80, desc: "salida con el grupo del campamento 07/08" }, { id: "m8", type: "-", amount: 12.99, desc: "salida con el grupo del campamento 09/08" }, { id: "m9", type: "-", amount: 41.30, desc: "sushi + bowling" }, { id: "m10", type: "-", amount: 39.80, desc: "Kinepolis — Spiderman new brand day" }] },
+        { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [{ id: "m11", type: "+", amount: 15.00, desc: "mami puso para el primer mes" }, { id: "m12", type: "-", amount: 24.99, desc: "Basic Fit" }, { id: "m13", type: "-", amount: 13.18, desc: "desodorante Kruidvat" }, { id: "m14", type: "-", amount: 47.98, desc: "suplementos Nxt Level" }, { id: "m15", type: "-", amount: 18.92, desc: "cambio de plan Basic Fit" }, { id: "m16", type: "-", amount: 20.02, desc: "compra Shein: mangas deportivas + tripod" }, { id: "m17", type: "-", amount: 20.00, desc: "peluquería" }, { id: "m18", type: "-", amount: 34.99, desc: "Basic Fit" }, { id: "m19", type: "-", amount: 34.99, desc: "Basic Fit" }] },
+        { id: "cat-whatever", name: "20% whatever", percentage: 20, customNote: "", movements: [{ id: "m20", type: "+", amount: 73.75, desc: "reembolso de Shein" }, { id: "m21", type: "+", amount: 110.00, desc: "de mami para la compra" }, { id: "m22", type: "+", amount: 28.00, desc: "que me pagó" }, { id: "m23", type: "-", amount: 27.00, desc: "préstamo a Esaul" }, { id: "m24", type: "-", amount: 44.10, desc: "compra" }, { id: "m25", type: "-", amount: 32.00, desc: "flores a Mey-ling" }, { id: "m26", type: "-", amount: 73.75, desc: "compra en Shein" }, { id: "m27", type: "-", amount: 5.31, desc: "compra en Shein: luz violeta" }, { id: "m28", type: "-", amount: 48.65, desc: "boodschap" }, { id: "m29", type: "-", amount: 297.00, desc: "pago del teléfono de mami (3x99€)" }, { id: "m30", type: "-", amount: 1.85, desc: "chicle" }, { id: "m31", type: "-", amount: 79.00, desc: "ropa ARW y ropa de gimnasio" }, { id: "m32", type: "-", amount: 10.00, desc: "protector de pantalla" }, { id: "m33", type: "-", amount: 25.00, desc: "para que mami le envíe a mamá" }, { id: "m34", type: "-", amount: 5.00, desc: "plátano en el aeropuerto" }] }
+      ]
+    };
+
+    function createEmptyQuarter() {
+      return {
+        income: 0,
+        initialCapital: 0,
+        bankBalance: 0,
+        categories: [
+          { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [] },
+          { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [] },
+          { id: "cat-inversion", name: "5% inversión", percentage: 5, customNote: "", movements: [] },
+          { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "", movements: [] },
+          { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [] },
+          { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [] },
+          { id: "cat-whatever", name: "20% whatever", percentage: 20, customNote: "", movements: [] }
+        ]
+      };
+    }
+
+    let state = {
+      theme: "dark",
+      activeQuarter: "Q3",
+      quarters: {
+        Q1: createEmptyQuarter(),
+        Q2: createEmptyQuarter(),
+        Q3: JSON.parse(JSON.stringify(DEFAULT_Q3_DATA)),
+        Q4: createEmptyQuarter()
+      }
+    };
+
+    // Historial temporal de sesión (se reinicia al cerrar o refrescar la aplicación)
+    let sessionIncomeHistory = [];
+    let focusTargetCatId = null;
+
+    function formatCurrency(amount) {
+      if (Math.abs(amount) < 0.005) return '0,00 €';
+      return new Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount) + ' €';
+    }
+
+    function calculateAutoBankBalance(qData) {
+      let totalSpent = 0;
+      let totalPlus = 0;
+      qData.categories.forEach(cat => {
+        cat.movements.forEach(m => {
+          if (m.type === '-') totalSpent += m.amount;
+          if (m.type === '+') totalPlus += m.amount;
+        });
+      });
+      return (qData.initialCapital || 0) + (qData.income || 0) + totalPlus - totalSpent;
+    }
+
+    function init() {
+      const saved = localStorage.getItem('quarterly_tracker_multi_q_v6');
+      if (saved) {
+        try { 
+          const parsed = JSON.parse(saved);
+          if (parsed.quarters) state = parsed; 
+        } catch (e) {}
+      }
+      if (!state.theme) state.theme = "dark";
+      if (!state.activeQuarter) state.activeQuarter = "Q3";
+      
+      applyTheme();
+      saveState();
+      render();
+    }
+
+    function getCurrentQuarterData() {
+      if (!state.quarters[state.activeQuarter]) {
+        state.quarters[state.activeQuarter] = createEmptyQuarter();
+      }
+      return state.quarters[state.activeQuarter];
+    }
+
+    function applyTheme() {
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (state.theme === "light") {
+        document.body.classList.add("light-theme");
+        document.getElementById("theme-icon").textContent = "☀️";
+        document.getElementById("theme-text").textContent = "Modo Claro";
+        if (metaTheme) metaTheme.setAttribute('content', '#f1f5f9');
+      } else {
+        document.body.classList.remove("light-theme");
+        document.getElementById("theme-icon").textContent = "🌙";
+        document.getElementById("theme-text").textContent = "Modo Oscuro";
+        if (metaTheme) metaTheme.setAttribute('content', '#0f172a');
+      }
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === "light" ? "dark" : "light";
+      applyTheme();
+      saveState();
+    }
+
+    function saveState() {
+      localStorage.setItem('quarterly_tracker_multi_q_v6', JSON.stringify(state));
+    }
+
+    function changeQuarter(val) {
+      const previousQuarter = state.activeQuarter;
+      state.activeQuarter = val;
+      
+      const qOrder = ["Q1", "Q2", "Q3", "Q4"];
+      const prevIdx = qOrder.indexOf(previousQuarter);
+      const newIdx = qOrder.indexOf(val);
+
+      if (prevIdx !== -1 && newIdx === prevIdx + 1) {
+        const prevData = state.quarters[previousQuarter];
+        if (prevData) {
+          const prevBankBalance = calculateAutoBankBalance(prevData);
+          const currentData = getCurrentQuarterData();
+          currentData.initialCapital = parseFloat(prevBankBalance.toFixed(2));
+          currentData.bankBalance = calculateAutoBankBalance(currentData);
+        }
+      }
+
+      sessionIncomeHistory = []; // Resetear historial al cambiar de trimestre
+      saveState();
+      render();
+    }
+
+    function resetCurrentQuarterData() {
+      if (confirm(`¿Restablecer datos del trimestre ${state.activeQuarter}?`)) {
+        if (state.activeQuarter === "Q3") {
+          state.quarters.Q3 = JSON.parse(JSON.stringify(DEFAULT_Q3_DATA));
+        } else {
+          state.quarters[state.activeQuarter] = createEmptyQuarter();
+        }
+        sessionIncomeHistory = [];
+        saveState();
+        render();
+      }
+    }
+
+    /* Manejo de Ingresos e Historial Ilimitado de Sesión */
+    function pushIncomeToSessionHistory(val) {
+      sessionIncomeHistory.push(val);
+    }
+
+    function updateIncomeDirectly(val) {
+      const qData = getCurrentQuarterData();
+      const numVal = parseFloat(val);
+      const newIncome = isNaN(numVal) ? 0 : parseFloat(numVal.toFixed(2));
+      
+      if (qData.income !== newIncome) {
+        pushIncomeToSessionHistory(qData.income || 0);
+        qData.income = newIncome;
+        qData.bankBalance = calculateAutoBankBalance(qData);
+        saveState();
+        render();
+      }
+    }
+
+    function openIncomeModal() {
+      document.getElementById('income-add-input').value = '';
+      document.getElementById('income-modal').style.display = 'flex';
+      setTimeout(() => document.getElementById('income-add-input').focus(), 100);
+    }
+
+    function closeIncomeModal() {
+      document.getElementById('income-modal').style.display = 'none';
+    }
+
+    function submitAddIncome() {
+      const input = document.getElementById('income-add-input');
+      const addVal = parseFloat(input.value);
+      if (!isNaN(addVal) && addVal > 0) {
+        const qData = getCurrentQuarterData();
+        pushIncomeToSessionHistory(qData.income || 0);
+
+        qData.income = (qData.income || 0) + addVal;
+        qData.bankBalance = calculateAutoBankBalance(qData);
+        saveState();
+        render();
+      }
+      closeIncomeModal();
+    }
+
+    function undoIncomeChange() {
+      if (sessionIncomeHistory.length > 0) {
+        const qData = getCurrentQuarterData();
+        qData.income = sessionIncomeHistory.pop();
+        qData.bankBalance = calculateAutoBankBalance(qData);
+        saveState();
+        render();
+      }
+    }
+
+    function updateInitialCap(val) { 
+      const qData = getCurrentQuarterData();
+      const numVal = parseFloat(val);
+      qData.initialCapital = isNaN(numVal) ? 0 : parseFloat(numVal.toFixed(2)); 
+      qData.bankBalance = calculateAutoBankBalance(qData);
+      saveState(); 
+      render();
+    }
+
+    function updateBankBalanceManual(val) { 
+      const numVal = parseFloat(val);
+      getCurrentQuarterData().bankBalance = isNaN(numVal) ? 0 : parseFloat(numVal.toFixed(2)); 
+      saveState(); 
+    }
+
+    function updateCatPercentage(catId, val) {
+      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
+      if (cat) { cat.percentage = parseFloat(val) || 0; saveState(); render(); }
+    }
+
+    function updateCatName(catId, val) {
+      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
+      if (cat) { cat.name = val; saveState(); }
+    }
+
+    function updateCatNote(catId, val) {
+      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
+      if (cat) { cat.customNote = val; saveState(); }
+    }
+
+    function addCategory() {
+      getCurrentQuarterData().categories.push({ id: 'cat-' + Date.now(), name: 'Nueva Categoría', percentage: 0, customNote: '', movements: [] });
+      saveState();
+      render();
+    }
+
+    function deleteCategory(catId) {
+      if (confirm('¿Eliminar esta categoría?')) {
+        const qData = getCurrentQuarterData();
+        qData.categories = qData.categories.filter(c => c.id !== catId);
+        qData.bankBalance = calculateAutoBankBalance(qData);
+        saveState();
+        render();
+      }
+    }
+
+    function addMovement(catId, event) {
+      event.preventDefault();
+      const form = event.target;
+      const type = form.type.value;
+      const desc = form.desc.value.trim();
+      const amount = parseFloat(form.amount.value);
+      if (!desc || isNaN(amount) || amount <= 0) return;
+
+      const qData = getCurrentQuarterData();
+      const cat = qData.categories.find(c => c.id === catId);
+      if (cat) {
+        cat.movements.push({ id: 'm-' + Date.now(), type, amount, desc });
+        qData.bankBalance = calculateAutoBankBalance(qData);
+        saveState();
+        focusTargetCatId = catId;
+        render();
+      }
+    }
+
+    function updateMovement(catId, movId, field, value) {
+      const qData = getCurrentQuarterData();
+      const cat = qData.categories.find(c => c.id === catId);
+      if (cat) {
+        const mov = cat.movements.find(m => m.id === movId);
+        if (mov) {
+          if (field === 'type') mov.type = value;
+          else if (field === 'desc') mov.desc = value;
+          else if (field === 'amount') mov.amount = parseFloat(value) || 0;
+          qData.bankBalance = calculateAutoBankBalance(qData);
+          saveState();
+          render();
+        }
+      }
+    }
+
+    function deleteMovement(catId, movId) {
+      const qData = getCurrentQuarterData();
+      const cat = qData.categories.find(c => c.id === catId);
+      if (cat) {
+        cat.movements = cat.movements.filter(m => m.id !== movId);
+        qData.bankBalance = calculateAutoBankBalance(qData);
+        saveState();
+        render();
+      }
+    }
+
+    function render() {
+      const qData = getCurrentQuarterData();
+      qData.bankBalance = calculateAutoBankBalance(qData);
+
+      document.getElementById('quarter-select').value = state.activeQuarter;
+      document.getElementById('income-input-editable').value = (qData.income || 0).toFixed(2);
+      
+      const undoBtn = document.getElementById('btn-undo');
+      if (sessionIncomeHistory.length > 0) {
+        undoBtn.disabled = false;
+      } else {
+        undoBtn.disabled = true;
+      }
+
+      document.getElementById('initial-cap-input').value = (qData.initialCapital || 0).toFixed(2);
+      document.getElementById('bank-balance-input').value = (qData.bankBalance || 0).toFixed(2);
+
+      let totalGlobalSpent = 0;
+      qData.categories.forEach(cat => {
+        cat.movements.filter(m => m.type === '-').forEach(m => {
+          totalGlobalSpent += m.amount;
+        });
+      });
+      document.getElementById('total-global-spent').textContent = formatCurrency(totalGlobalSpent);
+
+      const totalPct = qData.categories.reduce((acc, c) => acc + (c.percentage || 0), 0);
+      const pctStatusText = document.getElementById('percentage-status-text');
+      const pctProgressBar = document.getElementById('percentage-progress');
+
+      pctProgressBar.style.width = Math.min(totalPct, 100) + '%';
+
+      if (totalPct === 100) {
+        pctStatusText.textContent = '100% Asignado';
+        pctStatusText.className = 'pct-status-badge status-ok';
+        pctProgressBar.className = 'progress-inner status-ok-bar';
+      } else if (totalPct < 100) {
+        pctStatusText.textContent = `${totalPct.toFixed(1)}% Asignado (Falta ${(100 - totalPct).toFixed(1)}%)`;
+        pctStatusText.className = 'pct-status-badge status-warning';
+        pctProgressBar.className = 'progress-inner status-warning-bar';
+      } else {
+        pctStatusText.textContent = `${totalPct.toFixed(1)}% Asignado (Excedido en ${(totalPct - 100).toFixed(1)}%)`;
+        pctStatusText.className = 'pct-status-badge status-danger';
+        pctProgressBar.className = 'progress-inner status-danger-bar';
+      }
+
+      const container = document.getElementById('categories-container');
+      container.innerHTML = '';
+
+      qData.categories.forEach(cat => {
+        const allocatedEUR = (qData.income * (cat.percentage / 100));
+        const plusMovements = cat.movements.filter(m => m.type === '+');
+        const minusMovements = cat.movements.filter(m => m.type === '-');
+        const sortedMovements = [...plusMovements, ...minusMovements];
+
+        const totalPlus = plusMovements.reduce((acc, m) => acc + m.amount, 0);
+        const totalSpentCat = minusMovements.reduce((acc, m) => acc + m.amount, 0);
+        const totalCatCalculated = allocatedEUR + totalPlus;
+        const remainingEUR = totalCatCalculated - totalSpentCat;
+
+        let remainingColor = 'var(--success)';
+        if (Math.abs(remainingEUR) < 0.005) {
+          remainingColor = 'var(--orange-brand)';
+        } else if (remainingEUR < 0) {
+          remainingColor = 'var(--danger)';
+        }
+
+        const isSpecialCat = cat.name.toLowerCase().includes('invers') || 
+                             cat.name.toLowerCase().includes('ahorro');
+
+        const card = document.createElement('article');
+        card.className = 'category-card';
+
+        card.innerHTML = `
+          <div class="cat-header">
+            <input type="text" class="cat-title-input" value="${escapeHtml(cat.name)}" onchange="updateCatName('${cat.id}', this.value)">
+            <div class="pct-input-group">
+              <input type="number" inputmode="decimal" step="0.5" value="${cat.percentage}" onchange="updateCatPercentage('${cat.id}', this.value)">
+              <span>%</span>
+            </div>
+            <button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')">&times;</button>
+          </div>
+
+          <div class="cat-summary">
+            <div>
+              <span>Asignado</span>
+              <strong>${formatCurrency(allocatedEUR)}</strong>
+              ${plusMovements.length > 0 ? `<span class="total-highlight">TOTAL: ${formatCurrency(totalCatCalculated)}</span>` : ''}
+            </div>
+            <div>
+              <span>Gastado</span>
+              <strong style="color: var(--text-main)">${formatCurrency(totalSpentCat)}</strong>
+            </div>
+            <div>
+              <span>Restante</span>
+              <strong style="color: ${remainingColor}">
+                ${formatCurrency(remainingEUR)}
+              </strong>
+            </div>
+          </div>
+
+          ${isSpecialCat ? `
+            <div class="extra-notes">
+              <label>Anotaciones / Detalles:</label>
+              <textarea placeholder="Escribe detalles aquí..." onchange="updateCatNote('${cat.id}', this.value)">${escapeHtml(cat.customNote || '')}</textarea>
+            </div>
+          ` : ''}
+
+          <div class="movements-section">
+            <ul class="movement-list">
+              ${sortedMovements.length === 0 ? '<li style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 6px 0;">Sin movimientos</li>' : ''}
+              ${sortedMovements.map(m => `
+                <li class="movement-item ${m.type === '+' ? 'plus' : 'minus'}">
+                  <select class="mov-type-select" onchange="updateMovement('${cat.id}', '${m.id}', 'type', this.value)">
+                    <option value="-" ${m.type === '-' ? 'selected' : ''}>-</option>
+                    <option value="+" ${m.type === '+' ? 'selected' : ''}>+</option>
+                  </select>
+                  <input type="text" class="mov-desc-input" value="${escapeHtml(m.desc)}" onchange="updateMovement('${cat.id}', '${m.id}', 'desc', this.value)">
+                  <input type="number" inputmode="decimal" step="0.01" class="mov-amount-input" value="${m.amount}" onchange="updateMovement('${cat.id}', '${m.id}', 'amount', this.value)">
+                  <span style="font-size:0.75rem; color:var(--text-muted);">€</span>
+                  <button class="btn-icon" onclick="deleteMovement('${cat.id}', '${m.id}')">&times;</button>
+                </li>
+              `).join('')}
+            </ul>
+
+            <form class="mov-form" id="form-mov-${cat.id}" onsubmit="addMovement('${cat.id}', event)">
+              <select name="type">
+                <option value="-">&minus;</option>
+                <option value="+">+</option>
+              </select>
+              <input type="text" name="desc" placeholder="Descripción" required>
+              <input type="number" inputmode="decimal" step="0.01" name="amount" placeholder="€" required>
+              <button type="submit" class="btn-add">+</button>
+            </form>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      if (focusTargetCatId) {
+        const inputDesc = document.querySelector(`#form-mov-${focusTargetCatId} input[name="desc"]`);
+        if (inputDesc) {
+          setTimeout(() => inputDesc.focus(), 50);
+        }
+        focusTargetCatId = null;
+      }
+    }
+
+    function exportToCSV() {
+      const qData = getCurrentQuarterData();
+      let csv = "Trimestre,Tipo,Categoria,Descripcion,Monto (EUR)\n";
+
+      qData.categories.forEach(cat => {
+        if (cat.movements.length === 0) {
+          csv += `"${state.activeQuarter}","N/A","${cat.name}","Sin movimientos","0"\n`;
+        } else {
+          cat.movements.forEach(m => {
+            csv += `"${state.activeQuarter}","${m.type}","${cat.name}","${m.desc}",${m.amount}\n`;
+          });
+        }
+      });
+
+      const blob = new Blob([csv], { type: "text/plain;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    }
+
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const qData = getCurrentQuarterData();
+
+      doc.setFontSize(16);
+      doc.text(`Tracker Financiero - Trimestre ${state.activeQuarter}`, 14, 15);
+      
+      doc.setFontSize(10);
+      doc.text(`Ingresos: ${formatCurrency(qData.income)}  |  Capital Inicial: ${formatCurrency(qData.initialCapital)}  |  Saldo Banco: ${formatCurrency(qData.bankBalance)}`, 14, 23);
+
+      const tableRows = [];
+      qData.categories.forEach(cat => {
+        const allocated = (qData.income * (cat.percentage / 100));
+        const plus = cat.movements.filter(m => m.type === '+').reduce((acc, m) => acc + m.amount, 0);
+        const minus = cat.movements.filter(m => m.type === '-').reduce((acc, m) => acc + m.amount, 0);
+        const remaining = allocated + plus - minus;
+
+        tableRows.push([
+          cat.name,
+          `${cat.percentage}%`,
+          formatCurrency(allocated),
+          formatCurrency(minus),
+          formatCurrency(remaining)
+        ]);
+      });
+
+      doc.autoTable({
+        startY: 30,
+        head: [['Categoría', '%', 'Asignado', 'Gastado', 'Restante']],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillStyle: [59, 130, 246] }
+      });
+
+      const pdfDataUri = doc.output('datauristring');
+      const win = window.open();
+      if (win) {
+        win.document.write(`<iframe src="${pdfDataUri}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+      }
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
