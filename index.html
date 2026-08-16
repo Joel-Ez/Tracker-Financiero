@@ -763,21 +763,6 @@
   </div>
 
   <script>
-    const DEFAULT_Q3_DATA = {
-      income: 14890.66,
-      initialCapital: 10.26,
-      bankBalance: 77.28,
-      categories: [
-        { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [] },
-        { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [] },
-        { id: "cat-inversion", name: "5% inversión", percentage: 5, customNote: "DEGIRO", movements: [{ id: "m1", type: "+", amount: 170.00, desc: "DEGIRO" }] },
-        { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "Ahorros / Carnet de conducir (rijbewijs)", movements: [{ id: "m2", type: "+", amount: 1600.00, desc: "ahorros" }, { id: "m3", type: "-", amount: 1500.00, desc: "rijbewijs" }, { id: "m4", type: "+", amount: 400.00, desc: "para la cuenta de ahorro" }] },
-        { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [{ id: "m5", type: "-", amount: 10.00, desc: "visita al Palacio Real" }, { id: "m6", type: "-", amount: 58.51, desc: "salida con Airah al evento 'Prodigy12'" }, { id: "m7", type: "-", amount: 20.80, desc: "salida con el grupo del campamento 07/08" }, { id: "m8", type: "-", amount: 12.99, desc: "salida con el grupo del campamento 09/08" }, { id: "m9", type: "-", amount: 41.30, desc: "sushi + bowling" }, { id: "m10", type: "-", amount: 39.80, desc: "Kinepolis — Spiderman new brand day" }] },
-        { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [{ id: "m11", type: "+", amount: 15.00, desc: "mami puso para el primer mes" }, { id: "m12", type: "-", amount: 24.99, desc: "Basic Fit" }, { id: "m13", type: "-", amount: 13.18, desc: "desodorante Kruidvat" }, { id: "m14", type: "-", amount: 47.98, desc: "suplementos Nxt Level" }, { id: "m15", type: "-", amount: 18.92, desc: "cambio de plan Basic Fit" }, { id: "m16", type: "-", amount: 20.02, desc: "compra Shein: mangas deportivas + tripod" }, { id: "m17", type: "-", amount: 20.00, desc: "peluquería" }, { id: "m18", type: "-", amount: 34.99, desc: "Basic Fit" }, { id: "m19", type: "-", amount: 34.99, desc: "Basic Fit" }] },
-        { id: "cat-whatever", name: "20% whatever", percentage: 20, customNote: "", movements: [{ id: "m20", type: "+", amount: 73.75, desc: "reembolso de Shein" }, { id: "m21", type: "+", amount: 110.00, desc: "de mami para la compra" }, { id: "m22", type: "+", amount: 28.00, desc: "que me pagó" }, { id: "m23", type: "-", amount: 27.00, desc: "préstamo a Esaul" }, { id: "m24", type: "-", amount: 44.10, desc: "compra" }, { id: "m25", type: "-", amount: 32.00, desc: "flores a Mey-ling" }, { id: "m26", type: "-", amount: 73.75, desc: "compra en Shein" }, { id: "m27", type: "-", amount: 5.31, desc: "compra en Shein: luz violeta" }, { id: "m28", type: "-", amount: 48.65, desc: "boodschap" }, { id: "m29", type: "-", amount: 297.00, desc: "pago del teléfono de mami (3x99€)" }, { id: "m30", type: "-", amount: 1.85, desc: "chicle" }, { id: "m31", type: "-", amount: 79.00, desc: "ropa ARW y ropa de gimnasio" }, { id: "m32", type: "-", amount: 10.00, desc: "protector de pantalla" }, { id: "m33", type: "-", amount: 25.00, desc: "para que mami le envíe a mamá" }, { id: "m34", type: "-", amount: 5.00, desc: "plátano en el aeropuerto" }] }
-      ]
-    };
-
     function createEmptyQuarter() {
       return {
         income: 0,
@@ -797,11 +782,11 @@
 
     let state = {
       theme: "dark",
-      activeQuarter: "Q3",
+      activeQuarter: "Q1",
       quarters: {
         Q1: createEmptyQuarter(),
         Q2: createEmptyQuarter(),
-        Q3: JSON.parse(JSON.stringify(DEFAULT_Q3_DATA)),
+        Q3: createEmptyQuarter(),
         Q4: createEmptyQuarter()
       }
     };
@@ -839,7 +824,7 @@
         } catch (e) {}
       }
       if (!state.theme) state.theme = "dark";
-      if (!state.activeQuarter) state.activeQuarter = "Q3";
+      if (!state.activeQuarter) state.activeQuarter = "Q1";
       
       applyTheme();
       saveState();
@@ -903,11 +888,7 @@
 
     function resetCurrentQuarterData() {
       if (confirm(`¿Restablecer datos del trimestre ${state.activeQuarter}?`)) {
-        if (state.activeQuarter === "Q3") {
-          state.quarters.Q3 = JSON.parse(JSON.stringify(DEFAULT_Q3_DATA));
-        } else {
-          state.quarters[state.activeQuarter] = createEmptyQuarter();
-        }
+        state.quarters[state.activeQuarter] = createEmptyQuarter();
         sessionIncomeHistory = [];
         saveState();
         render();
