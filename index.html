@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
   <title>Tracker Financiero Trimestral</title>
+  
+  <!-- Librerías para Exportación PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  
+  <!-- Librería para Arrastre (Drag and Drop) nativo y táctil móvil -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
   <style>
     :root {
       --bg-color: #0f172a;
@@ -299,9 +305,11 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      touch-action: pan-y;
     }
 
     .category-card {
+      position: relative;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
@@ -309,6 +317,43 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      cursor: grab;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .category-card:active {
+      cursor: grabbing;
+    }
+
+    .sortable-ghost {
+      opacity: 0.4;
+      border: 2px dashed var(--primary) !important;
+    }
+
+    .sortable-drag {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .drag-handle {
+      cursor: grab;
+      padding: 4px 8px;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .category-card.income-type {
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .category-card.bg-money {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" opacity="0.12"><rect width="200" height="150" fill="%2310b981"/><path d="M10 10h180v130H10z" fill="none" stroke="%23ffffff" stroke-width="4"/><circle cx="100" cy="75" r="30" fill="none" stroke="%23ffffff" stroke-width="4"/><text x="100" y="85" font-size="30" font-weight="bold" fill="%23ffffff" text-anchor="middle">$</text></svg>');
+      background-repeat: repeat;
+      background-size: 120px;
     }
 
     .cat-header {
@@ -322,8 +367,8 @@
       background: transparent;
       border: none;
       color: var(--text-main);
-      font-size: 1rem;
-      font-weight: 700;
+      font-size: 1.1rem;
+      font-weight: 800;
       width: 100%;
       outline: none;
       border-bottom: 1px solid transparent;
@@ -340,7 +385,7 @@
       border: 1px solid var(--card-border);
       border-radius: 6px;
       padding: 4px 6px;
-      min-width: 70px;
+      min-width: 65px;
     }
 
     .pct-input-group input {
@@ -349,37 +394,68 @@
       border: none;
       color: var(--text-main);
       text-align: right;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.9rem;
       outline: none;
     }
 
     .cat-summary {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
       background: var(--input-bg);
-      padding: 10px;
+      padding: 10px 8px;
       border-radius: 8px;
       font-size: 0.75rem;
+      align-items: center;
     }
 
     .cat-summary div span {
       display: block;
       color: var(--text-muted);
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     .cat-summary div strong {
       font-size: 0.85rem;
     }
 
+    .summary-actions-cell {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .btn-action-icon {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-action-icon:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
     .total-highlight {
       color: var(--orange-brand) !important;
       font-weight: 800;
       display: block;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       margin-top: 2px;
     }
 
@@ -603,14 +679,13 @@
       cursor: pointer;
     }
 
-    /* Modal emergente para agregar ingresos */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -624,7 +699,7 @@
       border-radius: 16px;
       padding: 20px;
       width: 100%;
-      max-width: 320px;
+      max-width: 360px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
 
@@ -645,6 +720,21 @@
       font-weight: bold;
       outline: none;
       margin-bottom: 16px;
+    }
+
+    .modal-textarea {
+      width: 100%;
+      height: 120px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      margin-bottom: 12px;
+      resize: vertical;
     }
 
     .modal-buttons {
@@ -672,6 +762,23 @@
       font-weight: bold;
       cursor: pointer;
     }
+
+    .modal-option-btn {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .modal-option-btn:hover {
+      border-color: var(--primary);
+    }
   </style>
 </head>
 <body>
@@ -698,7 +805,7 @@
         <div class="stat-card-income">
           <label>INGRESO (€)</label>
           <div class="income-row">
-            <input type="number" inputmode="decimal" step="0.01" class="income-input-editable" id="income-input-editable" onchange="updateIncomeDirectly(this.value)">
+            <input type="number" inputmode="decimal" step="any" class="income-input-editable" id="income-input-editable" onchange="updateIncomeDirectly(this.value)">
             <div class="income-actions">
               <button class="btn-undo" id="btn-undo" onclick="undoIncomeChange()" title="Deshacer cambio de ingreso" disabled>↩</button>
               <button class="btn-add-income" onclick="openIncomeModal()">+</button>
@@ -713,11 +820,11 @@
     <section class="global-summary-card">
       <div style="border:none; padding:0; background:transparent;">
         <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">Capital Inicial (€)</span>
-        <input type="number" inputmode="decimal" step="0.01" id="initial-cap-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateInitialCap(this.value)">
+        <input type="number" inputmode="decimal" step="any" id="initial-cap-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateInitialCap(this.value)">
       </div>
       <div style="border:none; padding:0; background:transparent;">
         <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">Saldo en Banco (€)</span>
-        <input type="number" inputmode="decimal" step="0.01" id="bank-balance-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateBankBalanceManual(this.value)">
+        <input type="number" inputmode="decimal" step="any" id="bank-balance-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateBankBalanceManual(this.value)">
       </div>
       
       <div class="global-summary-item full-width">
@@ -739,7 +846,7 @@
     <section id="categories-container" class="categories-grid"></section>
 
     <section class="actions-bar">
-      <button class="btn-main" onclick="addCategory()">+ Añadir Categoría</button>
+      <button class="btn-main" onclick="openAddCatModal()">+ Añadir Categoría</button>
       
       <div class="export-group">
         <button class="btn-secondary" onclick="exportToCSV()">📊 Exportar CSV</button>
@@ -750,11 +857,10 @@
     </section>
   </main>
 
-  <!-- Modal para Agregar Ingreso -->
   <div id="income-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <h3>Agregar al Ingreso (€)</h3>
-      <input type="number" inputmode="decimal" step="0.01" id="income-add-input" class="modal-input" placeholder="0.00">
+      <input type="number" inputmode="decimal" step="any" id="income-add-input" class="modal-input" placeholder="0.00">
       <div class="modal-buttons">
         <button class="btn-modal-cancel" onclick="closeIncomeModal()">Cancelar</button>
         <button class="btn-modal-submit" onclick="submitAddIncome()">Agregar</button>
@@ -762,20 +868,69 @@
     </div>
   </div>
 
+  <div id="add-cat-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Selecciona el tipo de categoría</h3>
+      <button class="modal-option-btn" onclick="addCategory('normal')">📂 Categoría Normal (Gastos/Presupuesto)</button>
+      <button class="modal-option-btn" onclick="addCategory('income')">💵 Gastos Externos / Ganancias (Entrada de Dinero)</button>
+      <div class="modal-buttons" style="margin-top:10px;">
+        <button class="btn-modal-cancel" onclick="closeAddCatModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-cat-style-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Personalizar Fondo del Cuadrante</h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Elige una foto o un color para este cuadrante:</p>
+      
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; display:block; margin-bottom:4px; font-weight:bold;">📱 Seleccionar foto de tu dispositivo:</label>
+        <input type="file" id="phone-photo-input" accept="image/*" style="width:100%; font-size:0.8rem; background:var(--input-bg); border:1px solid var(--card-border); padding:6px; border-radius:6px; color:var(--text-main);">
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; display:block; margin-bottom:4px; font-weight:bold;">🎨 O elige un color de fondo:</label>
+        <input type="color" id="cat-bg-color-picker" value="#1e293b" style="width:100%; height:40px; border:none; border-radius:6px; cursor:pointer;">
+      </div>
+
+      <button class="modal-option-btn" onclick="applyCustomStyleToTargetCat()">Aplicar Cambios</button>
+      <button class="modal-option-btn" onclick="resetCatStyleToDefault()" style="background:transparent; border-color:var(--danger); color:var(--danger);">Restablecer Fondo Predeterminado</button>
+      
+      <div class="modal-buttons" style="margin-top:10px;">
+        <button class="btn-modal-cancel" onclick="closeCustomCatModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="paste-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Pegar Gastos en Lote</h3>
+      <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Pega tus líneas con formato como "- Nombre €00,00" o "+ Nombre €00,00":</p>
+      <textarea id="paste-textarea" class="modal-textarea" placeholder="- Flixbus €29,47&#10;- Rotterdam €59,21&#10;+ Reembolso €15,00"></textarea>
+      <div class="modal-buttons">
+        <button class="btn-modal-cancel" onclick="closePasteModal()">Cancelar</button>
+        <button class="btn-modal-submit" onclick="submitPasteMovements()">Añadir Gastos</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    const QUARTER_ORDER = ["Q1", "Q2", "Q3", "Q4"];
+
     function createEmptyQuarter() {
       return {
         income: 0,
         initialCapital: 0,
         bankBalance: 0,
         categories: [
-          { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [] },
-          { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [] },
-          { id: "cat-inversion", name: "5% inversión", percentage: 5, customNote: "", movements: [] },
-          { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "", movements: [] },
-          { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [] },
-          { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [] },
-          { id: "cat-whatever", name: "20% whatever", percentage: 20, customNote: "", movements: [] }
+          { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [], type: "normal" },
+          { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [], type: "normal" },
+          { id: "cat-inversion", name: "5% inversión", percentage: 5, customNote: "", movements: [], type: "normal" },
+          { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "", movements: [], type: "normal" },
+          { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [], type: "normal" },
+          { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [], type: "normal" },
+          { id: "cat-whatever", name: "20% whatever", percentage: 20, customNote: "", movements: [], type: "normal" }
         ]
       };
     }
@@ -791,9 +946,18 @@
       }
     };
 
-    // Historial temporal de sesión (se reinicia al cerrar o refrescar la aplicación)
     let sessionIncomeHistory = [];
     let focusTargetCatId = null;
+    let targetPasteCatId = null;
+    let targetStyleCatId = null;
+    let sortableInstance = null;
+
+    function sanitizeFloat(val) {
+      if (!val) return 0;
+      const cleanVal = val.toString().replace(',', '.');
+      const parsed = parseFloat(cleanVal);
+      return isNaN(parsed) ? 0 : parsed;
+    }
 
     function formatCurrency(amount) {
       if (Math.abs(amount) < 0.005) return '0,00 €';
@@ -801,6 +965,20 @@
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(amount) + ' €';
+    }
+
+    // Para mostrar texto con coma (ej. badge superior)
+    function formatPercentageText(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      const cleanNum = Math.round(num * 100) / 100;
+      return (cleanNum % 1 === 0) ? cleanNum.toFixed(0) : cleanNum.toString().replace('.', ',');
+    }
+
+    // Para inputs de tipo <input type="number"> que requieren obligatoriamente PUNTO (.)
+    function formatPercentageInput(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      const cleanNum = Math.round(num * 100) / 100;
+      return (cleanNum % 1 === 0) ? cleanNum.toFixed(0) : cleanNum.toString();
     }
 
     function calculateAutoBankBalance(qData) {
@@ -815,8 +993,27 @@
       return (qData.initialCapital || 0) + (qData.income || 0) + totalPlus - totalSpent;
     }
 
+    function syncFutureQuarters(changedQuarterKey) {
+      const startIdx = QUARTER_ORDER.indexOf(changedQuarterKey);
+      if (startIdx === -1) return;
+
+      for (let i = startIdx; i < QUARTER_ORDER.length - 1; i++) {
+        const currentKey = QUARTER_ORDER[i];
+        const nextKey = QUARTER_ORDER[i + 1];
+        
+        const currentData = state.quarters[currentKey];
+        const nextData = state.quarters[nextKey];
+
+        if (currentData && nextData) {
+          const finalBalance = calculateAutoBankBalance(currentData);
+          nextData.initialCapital = parseFloat(finalBalance.toFixed(2));
+          nextData.bankBalance = calculateAutoBankBalance(nextData);
+        }
+      }
+    }
+
     function init() {
-      const saved = localStorage.getItem('quarterly_tracker_multi_q_v6');
+      const saved = localStorage.getItem('quarterly_tracker_multi_q_v8');
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
@@ -860,28 +1057,12 @@
     }
 
     function saveState() {
-      localStorage.setItem('quarterly_tracker_multi_q_v6', JSON.stringify(state));
+      localStorage.setItem('quarterly_tracker_multi_q_v8', JSON.stringify(state));
     }
 
     function changeQuarter(val) {
-      const previousQuarter = state.activeQuarter;
       state.activeQuarter = val;
-      
-      const qOrder = ["Q1", "Q2", "Q3", "Q4"];
-      const prevIdx = qOrder.indexOf(previousQuarter);
-      const newIdx = qOrder.indexOf(val);
-
-      if (prevIdx !== -1 && newIdx === prevIdx + 1) {
-        const prevData = state.quarters[previousQuarter];
-        if (prevData) {
-          const prevBankBalance = calculateAutoBankBalance(prevData);
-          const currentData = getCurrentQuarterData();
-          currentData.initialCapital = parseFloat(prevBankBalance.toFixed(2));
-          currentData.bankBalance = calculateAutoBankBalance(currentData);
-        }
-      }
-
-      sessionIncomeHistory = []; // Resetear historial al cambiar de trimestre
+      sessionIncomeHistory = [];
       saveState();
       render();
     }
@@ -890,25 +1071,26 @@
       if (confirm(`¿Restablecer datos del trimestre ${state.activeQuarter}?`)) {
         state.quarters[state.activeQuarter] = createEmptyQuarter();
         sessionIncomeHistory = [];
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         render();
       }
     }
 
-    /* Manejo de Ingresos e Historial Ilimitado de Sesión */
     function pushIncomeToSessionHistory(val) {
       sessionIncomeHistory.push(val);
     }
 
     function updateIncomeDirectly(val) {
       const qData = getCurrentQuarterData();
-      const numVal = parseFloat(val);
-      const newIncome = isNaN(numVal) ? 0 : parseFloat(numVal.toFixed(2));
+      const numVal = sanitizeFloat(val);
+      const newIncome = parseFloat(numVal.toFixed(2));
       
       if (qData.income !== newIncome) {
         pushIncomeToSessionHistory(qData.income || 0);
         qData.income = newIncome;
         qData.bankBalance = calculateAutoBankBalance(qData);
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         render();
       }
@@ -926,13 +1108,14 @@
 
     function submitAddIncome() {
       const input = document.getElementById('income-add-input');
-      const addVal = parseFloat(input.value);
-      if (!isNaN(addVal) && addVal > 0) {
+      const addVal = sanitizeFloat(input.value);
+      if (addVal > 0) {
         const qData = getCurrentQuarterData();
         pushIncomeToSessionHistory(qData.income || 0);
 
         qData.income = (qData.income || 0) + addVal;
         qData.bankBalance = calculateAutoBankBalance(qData);
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         render();
       }
@@ -944,6 +1127,7 @@
         const qData = getCurrentQuarterData();
         qData.income = sessionIncomeHistory.pop();
         qData.bankBalance = calculateAutoBankBalance(qData);
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         render();
       }
@@ -951,22 +1135,137 @@
 
     function updateInitialCap(val) { 
       const qData = getCurrentQuarterData();
-      const numVal = parseFloat(val);
-      qData.initialCapital = isNaN(numVal) ? 0 : parseFloat(numVal.toFixed(2)); 
+      const numVal = sanitizeFloat(val);
+      qData.initialCapital = parseFloat(numVal.toFixed(2)); 
       qData.bankBalance = calculateAutoBankBalance(qData);
+      syncFutureQuarters(state.activeQuarter);
       saveState(); 
       render();
     }
 
     function updateBankBalanceManual(val) { 
-      const numVal = parseFloat(val);
-      getCurrentQuarterData().bankBalance = isNaN(numVal) ? 0 : parseFloat(numVal.toFixed(2)); 
+      const numVal = sanitizeFloat(val);
+      getCurrentQuarterData().bankBalance = parseFloat(numVal.toFixed(2)); 
       saveState(); 
+    }
+
+    function openAddCatModal() {
+      document.getElementById('add-cat-modal').style.display = 'flex';
+    }
+
+    function closeAddCatModal() {
+      document.getElementById('add-cat-modal').style.display = 'none';
+    }
+
+    function openCustomCatModal(catId = null) {
+      closeAddCatModal();
+      targetStyleCatId = catId;
+      document.getElementById('phone-photo-input').value = '';
+      document.getElementById('custom-cat-style-modal').style.display = 'flex';
+    }
+
+    function closeCustomCatModal() {
+      document.getElementById('custom-cat-style-modal').style.display = 'none';
+      targetStyleCatId = null;
+    }
+
+    function applyCustomStyleToTargetCat() {
+      if (!targetStyleCatId) return;
+      const qData = getCurrentQuarterData();
+      const cat = qData.categories.find(c => c.id === targetStyleCatId);
+      if (!cat) return;
+
+      const fileInput = document.getElementById('phone-photo-input');
+      const selectedColor = document.getElementById('cat-bg-color-picker').value;
+
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          cat.bgStyle = 'custom-img';
+          cat.customImgData = e.target.result;
+          saveState();
+          render();
+          closeCustomCatModal();
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        cat.bgStyle = 'color';
+        cat.bgColor = selectedColor;
+        saveState();
+        render();
+        closeCustomCatModal();
+      }
+    }
+
+    function resetCatStyleToDefault() {
+      if (!targetStyleCatId) return;
+      const qData = getCurrentQuarterData();
+      const cat = qData.categories.find(c => c.id === targetStyleCatId);
+      if (cat) {
+        cat.bgStyle = '';
+        cat.bgColor = '';
+        cat.customImgData = '';
+        saveState();
+        render();
+      }
+      closeCustomCatModal();
+    }
+
+    function addCategory(type) {
+      closeAddCatModal();
+      const qData = getCurrentQuarterData();
+      const isIncome = type === 'income';
+
+      let newCat = {
+        id: 'cat-' + Date.now(),
+        name: isIncome ? 'Gastos Externos / Ganancias' : 'Nueva Categoría',
+        percentage: 0,
+        customNote: '',
+        movements: [],
+        type: type,
+        bgStyle: isIncome ? 'image' : '',
+        bgColor: '',
+        customImgData: ''
+      };
+
+      qData.categories.push(newCat);
+      saveState();
+      render();
+    }
+
+    function handleCardClick(event, catId) {
+      const interactiveElements = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'OPTION'];
+      if (interactiveElements.includes(event.target.tagName) || event.target.closest('.drag-handle')) {
+        return;
+      }
+      openCustomCatModal(catId);
+    }
+
+    function initSortable() {
+      const container = document.getElementById('categories-container');
+      if (!container) return;
+
+      if (sortableInstance) {
+        sortableInstance.destroy();
+      }
+
+      sortableInstance = new Sortable(container, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        onEnd: function (evt) {
+          const qData = getCurrentQuarterData();
+          const movedItem = qData.categories.splice(evt.oldIndex, 1)[0];
+          qData.categories.splice(evt.newIndex, 0, movedItem);
+          saveState();
+        }
+      });
     }
 
     function updateCatPercentage(catId, val) {
       const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
-      if (cat) { cat.percentage = parseFloat(val) || 0; saveState(); render(); }
+      if (cat) { cat.percentage = sanitizeFloat(val); saveState(); render(); }
     }
 
     function updateCatName(catId, val) {
@@ -979,20 +1278,94 @@
       if (cat) { cat.customNote = val; saveState(); }
     }
 
-    function addCategory() {
-      getCurrentQuarterData().categories.push({ id: 'cat-' + Date.now(), name: 'Nueva Categoría', percentage: 0, customNote: '', movements: [] });
-      saveState();
-      render();
-    }
-
     function deleteCategory(catId) {
       if (confirm('¿Eliminar esta categoría?')) {
         const qData = getCurrentQuarterData();
         qData.categories = qData.categories.filter(c => c.id !== catId);
         qData.bankBalance = calculateAutoBankBalance(qData);
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         render();
       }
+    }
+
+    function copyCatMovements(catId) {
+      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
+      if (!cat || cat.movements.length === 0) {
+        alert('No hay movimientos cargados en esta categoría para copiar.');
+        return;
+      }
+
+      const textLines = cat.movements.map(m => `${m.type} ${m.desc} €${m.amount.toFixed(2)}`).join('\n');
+      navigator.clipboard.writeText(textLines).then(() => {
+        alert(`¡Copiado con signos al portapapeles! (${cat.movements.length} movimientos)`);
+      }).catch(() => {
+        alert(textLines);
+      });
+    }
+
+    function openPasteModal(catId) {
+      targetPasteCatId = catId;
+      document.getElementById('paste-textarea').value = '';
+      document.getElementById('paste-modal').style.display = 'flex';
+      setTimeout(() => document.getElementById('paste-textarea').focus(), 100);
+    }
+
+    function closePasteModal() {
+      document.getElementById('paste-modal').style.display = 'none';
+      targetPasteCatId = null;
+    }
+
+    function submitPasteMovements() {
+      if (!targetPasteCatId) return;
+      const text = document.getElementById('paste-textarea').value;
+      if (!text.trim()) { closePasteModal(); return; }
+
+      const lines = text.split('\n');
+      const qData = getCurrentQuarterData();
+      const cat = qData.categories.find(c => c.id === targetPasteCatId);
+
+      if (cat) {
+        let addedCount = 0;
+        lines.forEach(line => {
+          let trimmed = line.trim();
+          if (!trimmed) return;
+
+          let movType = '-';
+          if (trimmed.startsWith('+')) {
+            movType = '+';
+            trimmed = trimmed.substring(1).trim();
+          } else if (trimmed.startsWith('-')) {
+            movType = '-';
+            trimmed = trimmed.substring(1).trim();
+          }
+
+          const match = trimmed.match(/^(.*?)(?:[€$]\s*|\s+)(\d+(?:[.,]\d+)?)$/i) || trimmed.match(/^(.*?)\s+(\d+(?:[.,]\d+)?)\s*[€$]?$/i);
+          if (match) {
+            const desc = match[1].trim() || 'Gasto importado';
+            const rawAmt = match[2].replace(',', '.');
+            const amount = parseFloat(rawAmt);
+
+            if (!isNaN(amount) && amount > 0) {
+              cat.movements.push({
+                id: 'm-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                type: movType,
+                amount: amount,
+                desc: desc
+              });
+              addedCount++;
+            }
+          }
+        });
+
+        if (addedCount > 0) {
+          qData.bankBalance = calculateAutoBankBalance(qData);
+          syncFutureQuarters(state.activeQuarter);
+          saveState();
+          render();
+        }
+      }
+      closePasteModal();
     }
 
     function addMovement(catId, event) {
@@ -1000,14 +1373,20 @@
       const form = event.target;
       const type = form.type.value;
       const desc = form.desc.value.trim();
-      const amount = parseFloat(form.amount.value);
-      if (!desc || isNaN(amount) || amount <= 0) return;
+      const amount = sanitizeFloat(form.amount.value);
+      if (!desc || amount <= 0) return;
 
       const qData = getCurrentQuarterData();
       const cat = qData.categories.find(c => c.id === catId);
       if (cat) {
         cat.movements.push({ id: 'm-' + Date.now(), type, amount, desc });
+        
+        if (cat.type === 'income' && type === '+') {
+          qData.income = (qData.income || 0) + amount;
+        }
+
         qData.bankBalance = calculateAutoBankBalance(qData);
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         focusTargetCatId = catId;
         render();
@@ -1020,10 +1399,24 @@
       if (cat) {
         const mov = cat.movements.find(m => m.id === movId);
         if (mov) {
+          const oldAmount = mov.amount;
+          const oldType = mov.type;
+
           if (field === 'type') mov.type = value;
           else if (field === 'desc') mov.desc = value;
-          else if (field === 'amount') mov.amount = parseFloat(value) || 0;
+          else if (field === 'amount') mov.amount = sanitizeFloat(value);
+
+          if (cat.type === 'income') {
+            if (oldType === '+' && field === 'amount') {
+              qData.income = (qData.income || 0) - oldAmount + mov.amount;
+            } else if (field === 'type') {
+              if (oldType === '+' && value === '-') qData.income = (qData.income || 0) - oldAmount;
+              if (oldType === '-' && value === '+') qData.income = (qData.income || 0) + mov.amount;
+            }
+          }
+
           qData.bankBalance = calculateAutoBankBalance(qData);
+          syncFutureQuarters(state.activeQuarter);
           saveState();
           render();
         }
@@ -1034,8 +1427,14 @@
       const qData = getCurrentQuarterData();
       const cat = qData.categories.find(c => c.id === catId);
       if (cat) {
+        const mov = cat.movements.find(m => m.id === movId);
+        if (mov && cat.type === 'income' && mov.type === '+') {
+          qData.income = Math.max(0, (qData.income || 0) - mov.amount);
+        }
+
         cat.movements = cat.movements.filter(m => m.id !== movId);
         qData.bankBalance = calculateAutoBankBalance(qData);
+        syncFutureQuarters(state.activeQuarter);
         saveState();
         render();
       }
@@ -1049,11 +1448,7 @@
       document.getElementById('income-input-editable').value = (qData.income || 0).toFixed(2);
       
       const undoBtn = document.getElementById('btn-undo');
-      if (sessionIncomeHistory.length > 0) {
-        undoBtn.disabled = false;
-      } else {
-        undoBtn.disabled = true;
-      }
+      undoBtn.disabled = sessionIncomeHistory.length === 0;
 
       document.getElementById('initial-cap-input').value = (qData.initialCapital || 0).toFixed(2);
       document.getElementById('bank-balance-input').value = (qData.bankBalance || 0).toFixed(2);
@@ -1066,7 +1461,10 @@
       });
       document.getElementById('total-global-spent').textContent = formatCurrency(totalGlobalSpent);
 
-      const totalPct = qData.categories.reduce((acc, c) => acc + (c.percentage || 0), 0);
+      const totalPct = qData.categories
+        .filter(c => c.type !== 'income')
+        .reduce((acc, c) => acc + (c.percentage || 0), 0);
+
       const pctStatusText = document.getElementById('percentage-status-text');
       const pctProgressBar = document.getElementById('percentage-progress');
 
@@ -1077,11 +1475,11 @@
         pctStatusText.className = 'pct-status-badge status-ok';
         pctProgressBar.className = 'progress-inner status-ok-bar';
       } else if (totalPct < 100) {
-        pctStatusText.textContent = `${totalPct.toFixed(1)}% Asignado (Falta ${(100 - totalPct).toFixed(1)}%)`;
+        pctStatusText.textContent = `${formatPercentageText(totalPct)}% Asignado (Falta ${formatPercentageText(100 - totalPct)}%)`;
         pctStatusText.className = 'pct-status-badge status-warning';
         pctProgressBar.className = 'progress-inner status-warning-bar';
       } else {
-        pctStatusText.textContent = `${totalPct.toFixed(1)}% Asignado (Excedido en ${(totalPct - 100).toFixed(1)}%)`;
+        pctStatusText.textContent = `${formatPercentageText(totalPct)}% Asignado (Excedido en ${formatPercentageText(totalPct - 100)}%)`;
         pctStatusText.className = 'pct-status-badge status-danger';
         pctProgressBar.className = 'progress-inner status-danger-bar';
       }
@@ -1090,14 +1488,26 @@
       container.innerHTML = '';
 
       qData.categories.forEach(cat => {
-        const allocatedEUR = (qData.income * (cat.percentage / 100));
+        const isIncomeCat = cat.type === 'income';
         const plusMovements = cat.movements.filter(m => m.type === '+');
         const minusMovements = cat.movements.filter(m => m.type === '-');
         const sortedMovements = [...plusMovements, ...minusMovements];
 
         const totalPlus = plusMovements.reduce((acc, m) => acc + m.amount, 0);
         const totalSpentCat = minusMovements.reduce((acc, m) => acc + m.amount, 0);
-        const totalCatCalculated = allocatedEUR + totalPlus;
+
+        let allocatedEUR = 0;
+        let displayedPct = 0;
+
+        if (isIncomeCat) {
+          allocatedEUR = totalPlus;
+          displayedPct = (qData.income > 0) ? ((totalPlus / qData.income) * 100) : 0;
+        } else {
+          allocatedEUR = (qData.income * (cat.percentage / 100));
+          displayedPct = cat.percentage || 0;
+        }
+
+        const totalCatCalculated = allocatedEUR + (isIncomeCat ? 0 : totalPlus);
         const remainingEUR = totalCatCalculated - totalSpentCat;
 
         let remainingColor = 'var(--success)';
@@ -1111,13 +1521,28 @@
                              cat.name.toLowerCase().includes('ahorro');
 
         const card = document.createElement('article');
-        card.className = 'category-card';
+        let cardClasses = 'category-card';
+        if (isIncomeCat) {
+          cardClasses += ' income-type';
+          if (cat.bgStyle === 'image') cardClasses += ' bg-money';
+        }
+        card.className = cardClasses;
+        card.setAttribute('data-id', cat.id);
+        card.setAttribute('onclick', `handleCardClick(event, '${cat.id}')`);
+
+        if (cat.bgStyle === 'color' && cat.bgColor) {
+          card.style.backgroundColor = cat.bgColor;
+        } else if (cat.bgStyle === 'custom-img' && cat.customImgData) {
+          card.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url(${cat.customImgData})`;
+        }
 
         card.innerHTML = `
           <div class="cat-header">
+            <span class="drag-handle" title="Arrastrar para reordenar">☰</span>
             <input type="text" class="cat-title-input" value="${escapeHtml(cat.name)}" onchange="updateCatName('${cat.id}', this.value)">
+            
             <div class="pct-input-group">
-              <input type="number" inputmode="decimal" step="0.5" value="${cat.percentage}" onchange="updateCatPercentage('${cat.id}', this.value)">
+              <input type="number" inputmode="decimal" step="any" value="${formatPercentageInput(displayedPct)}" ${isIncomeCat ? 'readonly style="opacity:0.8;"' : `onchange="updateCatPercentage('${cat.id}', this.value)"`}>
               <span>%</span>
             </div>
             <button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')">&times;</button>
@@ -1125,9 +1550,9 @@
 
           <div class="cat-summary">
             <div>
-              <span>Asignado</span>
+              <span>${isIncomeCat ? 'Entradas (+)' : 'Asignado'}</span>
               <strong>${formatCurrency(allocatedEUR)}</strong>
-              ${plusMovements.length > 0 ? `<span class="total-highlight">TOTAL: ${formatCurrency(totalCatCalculated)}</span>` : ''}
+              ${(!isIncomeCat && plusMovements.length > 0) ? `<span class="total-highlight">TOTAL: ${formatCurrency(totalCatCalculated)}</span>` : ''}
             </div>
             <div>
               <span>Gastado</span>
@@ -1138,6 +1563,10 @@
               <strong style="color: ${remainingColor}">
                 ${formatCurrency(remainingEUR)}
               </strong>
+            </div>
+            <div class="summary-actions-cell">
+              <button class="btn-action-icon" onclick="copyCatMovements('${cat.id}')" title="Copiar gastos de esta categoría">📄</button>
+              <button class="btn-action-icon" onclick="openPasteModal('${cat.id}')" title="Pegar gastos en lote">📋</button>
             </div>
           </div>
 
@@ -1158,7 +1587,7 @@
                     <option value="+" ${m.type === '+' ? 'selected' : ''}>+</option>
                   </select>
                   <input type="text" class="mov-desc-input" value="${escapeHtml(m.desc)}" onchange="updateMovement('${cat.id}', '${m.id}', 'desc', this.value)">
-                  <input type="number" inputmode="decimal" step="0.01" class="mov-amount-input" value="${m.amount}" onchange="updateMovement('${cat.id}', '${m.id}', 'amount', this.value)">
+                  <input type="number" inputmode="decimal" step="any" class="mov-amount-input" value="${m.amount}" onchange="updateMovement('${cat.id}', '${m.id}', 'amount', this.value)">
                   <span style="font-size:0.75rem; color:var(--text-muted);">€</span>
                   <button class="btn-icon" onclick="deleteMovement('${cat.id}', '${m.id}')">&times;</button>
                 </li>
@@ -1171,7 +1600,7 @@
                 <option value="+">+</option>
               </select>
               <input type="text" name="desc" placeholder="Descripción" required>
-              <input type="number" inputmode="decimal" step="0.01" name="amount" placeholder="€" required>
+              <input type="number" inputmode="decimal" step="any" name="amount" placeholder="€" required>
               <button type="submit" class="btn-add">+</button>
             </form>
           </div>
@@ -1179,6 +1608,8 @@
 
         container.appendChild(card);
       });
+
+      initSortable();
 
       if (focusTargetCatId) {
         const inputDesc = document.querySelector(`#form-mov-${focusTargetCatId} input[name="desc"]`);
@@ -1221,32 +1652,39 @@
 
       const tableRows = [];
       qData.categories.forEach(cat => {
-        const allocated = (qData.income * (cat.percentage / 100));
+        const isIncome = cat.type === 'income';
         const plus = cat.movements.filter(m => m.type === '+').reduce((acc, m) => acc + m.amount, 0);
         const minus = cat.movements.filter(m => m.type === '-').reduce((acc, m) => acc + m.amount, 0);
-        const remaining = allocated + plus - minus;
+
+        let allocated = isIncome ? plus : (qData.income * (cat.percentage / 100));
+        let pctLabel = isIncome ? `${formatPercentageText(qData.income > 0 ? (plus/qData.income*100) : 0)}%` : `${formatPercentageText(cat.percentage)}%`;
+        let remaining = allocated + (isIncome ? 0 : plus) - minus;
 
         tableRows.push([
           cat.name,
-          `${cat.percentage}%`,
+          pctLabel,
           formatCurrency(allocated),
           formatCurrency(minus),
           formatCurrency(remaining)
         ]);
       });
 
-      doc.autoTable({
-        startY: 30,
-        head: [['Categoría', '%', 'Asignado', 'Gastado', 'Restante']],
-        body: tableRows,
-        theme: 'striped',
-        headStyles: { fillStyle: [59, 130, 246] }
-      });
+      if (typeof doc.autoTable === 'function') {
+        doc.autoTable({
+          startY: 30,
+          head: [['Categoría', '%', 'Asignado/Entrada', 'Gastado', 'Restante']],
+          body: tableRows,
+          theme: 'striped',
+          headStyles: { fillStyle: [59, 130, 246] }
+        });
+      }
 
       const pdfDataUri = doc.output('datauristring');
       const win = window.open();
       if (win) {
         win.document.write(`<iframe src="${pdfDataUri}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+      } else {
+        doc.save(`Tracker_${state.activeQuarter}.pdf`);
       }
     }
 
