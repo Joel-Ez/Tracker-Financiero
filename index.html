@@ -248,31 +248,132 @@
 
     .global-summary-item.full-width strong {
       font-size: 1.15rem;
-      color: var(--danger);
+      color: var(--orange-brand);
+    }
+
+    .accounts-section {
+      grid-column: span 2;
+      border-top: 1px solid var(--card-border);
+      padding-top: 10px;
+      margin-top: 4px;
+    }
+
+    .accounts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .accounts-header span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .accounts-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-add-account {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-transfer-account {
+      background: var(--card-bg);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .accounts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .account-card-item {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .account-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .account-name-input {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 0.75rem;
+      font-weight: 700;
+      outline: none;
+      width: 80%;
+    }
+
+    .btn-del-account {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .account-balance-input {
+      background: transparent;
+      border: none;
+      color: var(--success);
+      font-size: 0.95rem;
+      font-weight: 800;
+      outline: none;
+      width: 100%;
+      margin-top: 2px;
     }
 
     .percentage-bar-container {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 12px;
+      padding: 6px 10px;
       margin-bottom: 16px;
     }
 
     .percentage-header {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
     }
 
     .pct-status-badge {
       background-color: #38bdf8;
       color: #0f172a !important;
-      padding: 2px 8px;
+      padding: 1px 6px;
       border-radius: 6px;
       font-weight: 800;
+      font-size: 0.7rem;
     }
 
     body.light-theme .pct-status-badge {
@@ -286,9 +387,9 @@
 
     .progress-outer {
       width: 100%;
-      height: 10px;
+      height: 6px;
       background: var(--card-border);
-      border-radius: 5px;
+      border-radius: 3px;
       overflow: hidden;
     }
 
@@ -340,10 +441,11 @@
 
     .drag-handle {
       cursor: grab;
-      padding: 4px 8px;
+      padding: 4px 4px 4px 0;
       font-size: 1.1rem;
       color: var(--text-muted);
       user-select: none;
+      flex-shrink: 0;
     }
 
     .category-card.income-type {
@@ -360,18 +462,20 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
 
     .cat-title-input {
       background: transparent;
       border: none;
       color: var(--text-main);
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 800;
-      width: 100%;
+      flex: 1;
+      min-width: 0;
       outline: none;
       border-bottom: 1px solid transparent;
+      text-overflow: ellipsis;
     }
 
     .cat-title-input:focus {
@@ -384,8 +488,9 @@
       background: var(--input-bg);
       border: 1px solid var(--card-border);
       border-radius: 6px;
-      padding: 4px 6px;
-      min-width: 65px;
+      padding: 2px 4px;
+      width: 48px;
+      flex-shrink: 0;
     }
 
     .pct-input-group input {
@@ -395,8 +500,14 @@
       color: var(--text-main);
       text-align: right;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       outline: none;
+      padding: 0;
+    }
+
+    .pct-input-group span {
+      font-size: 0.75rem;
+      margin-left: 1px;
     }
 
     .cat-summary {
@@ -524,7 +635,18 @@
       padding: 2px;
     }
 
-    .mov-type-select option {
+    .mov-account-select {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      max-width: 75px;
+    }
+
+    .mov-type-select option, .mov-account-select option {
       background: var(--card-bg);
       color: var(--text-main);
     }
@@ -597,7 +719,7 @@
       padding: 8px;
       border-radius: 6px;
       font-size: 0.8rem;
-      width: 40%;
+      width: 30%;
     }
 
     .mov-form input[type="number"] {
@@ -675,8 +797,9 @@
       border: none;
       color: var(--text-muted);
       font-size: 1.2rem;
-      padding: 2px 6px;
+      padding: 2px 4px;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .modal-overlay {
@@ -720,6 +843,19 @@
       font-weight: bold;
       outline: none;
       margin-bottom: 16px;
+    }
+
+    .modal-select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      outline: none;
+      margin-bottom: 12px;
     }
 
     .modal-textarea {
@@ -828,8 +964,19 @@
       </div>
       
       <div class="global-summary-item full-width">
-        <span>Gasto Total Acumulado:</span>
+        <span>Gasto Excedido (Límite Superado):</span>
         <strong id="total-global-spent">0,00 €</strong>
+      </div>
+
+      <div class="accounts-section">
+        <div class="accounts-header">
+          <span>Cuentas BANCARIAS</span>
+          <div class="accounts-btn-group">
+            <button class="btn-transfer-account" onclick="openTransferModal()">🔄 Transferir</button>
+            <button class="btn-add-account" onclick="addAccount()">+ Añadir</button>
+          </div>
+        </div>
+        <div class="accounts-grid" id="accounts-grid-container"></div>
       </div>
     </section>
 
@@ -856,6 +1003,27 @@
       <button class="btn-danger-outline" onclick="resetCurrentQuarterData()">Restablecer Trimestre Actual</button>
     </section>
   </main>
+
+  <!-- MODAL TRANSFERENCIAS ENTRE CUENTAS -->
+  <div id="transfer-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3>Transferencia entre Cuentas</h3>
+      
+      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Cuenta Origen (Sale dinero):</label>
+      <select id="transfer-from-select" class="modal-select"></select>
+
+      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Cuenta Destino (Entra dinero):</label>
+      <select id="transfer-to-select" class="modal-select"></select>
+
+      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Monto a transferir (€):</label>
+      <input type="number" inputmode="decimal" step="any" id="transfer-amount-input" class="modal-input" placeholder="0.00">
+
+      <div class="modal-buttons">
+        <button class="btn-modal-cancel" onclick="closeTransferModal()">Cancelar</button>
+        <button class="btn-modal-submit" onclick="submitTransfer()">Realizar Transferencia</button>
+      </div>
+    </div>
+  </div>
 
   <div id="income-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
@@ -918,11 +1086,20 @@
   <script>
     const QUARTER_ORDER = ["Q1", "Q2", "Q3", "Q4"];
 
+    function defaultAccounts() {
+      return [
+        { id: "acc-banco", name: "Banco", initialBalance: 0 },
+        { id: "acc-revolut", name: "Revolut", initialBalance: 0 },
+        { id: "acc-wise", name: "Wise", initialBalance: 0 }
+      ];
+    }
+
     function createEmptyQuarter() {
       return {
         income: 0,
         initialCapital: 0,
         bankBalance: 0,
+        accounts: defaultAccounts(),
         categories: [
           { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [], type: "normal" },
           { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [], type: "normal" },
@@ -967,14 +1144,12 @@
       }).format(amount) + ' €';
     }
 
-    // Para mostrar texto con coma (ej. badge superior)
     function formatPercentageText(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
       const cleanNum = Math.round(num * 100) / 100;
       return (cleanNum % 1 === 0) ? cleanNum.toFixed(0) : cleanNum.toString().replace('.', ',');
     }
 
-    // Para inputs de tipo <input type="number"> que requieren obligatoriamente PUNTO (.)
     function formatPercentageInput(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
       const cleanNum = Math.round(num * 100) / 100;
@@ -1012,14 +1187,41 @@
       }
     }
 
+    function migrateData(parsed) {
+      if (!parsed) return;
+      
+      const legacySaved = localStorage.getItem('quarterly_tracker_multi_q_v8');
+      const dataToUse = parsed.quarters ? parsed : (legacySaved ? JSON.parse(legacySaved) : null);
+
+      if (dataToUse && dataToUse.quarters) {
+        state = dataToUse;
+        QUARTER_ORDER.forEach(q => {
+          if (state.quarters[q]) {
+            if (!state.quarters[q].accounts) {
+              state.quarters[q].accounts = defaultAccounts();
+            }
+          }
+        });
+      }
+    }
+
     function init() {
-      const saved = localStorage.getItem('quarterly_tracker_multi_q_v8');
+      const saved = localStorage.getItem('quarterly_tracker_multi_q_v9');
       if (saved) {
         try { 
           const parsed = JSON.parse(saved);
-          if (parsed.quarters) state = parsed; 
+          migrateData(parsed);
         } catch (e) {}
+      } else {
+        const legacy = localStorage.getItem('quarterly_tracker_multi_q_v8');
+        if (legacy) {
+          try {
+            const parsedLegacy = JSON.parse(legacy);
+            migrateData(parsedLegacy);
+          } catch(e){}
+        }
       }
+
       if (!state.theme) state.theme = "dark";
       if (!state.activeQuarter) state.activeQuarter = "Q1";
       
@@ -1031,6 +1233,9 @@
     function getCurrentQuarterData() {
       if (!state.quarters[state.activeQuarter]) {
         state.quarters[state.activeQuarter] = createEmptyQuarter();
+      }
+      if (!state.quarters[state.activeQuarter].accounts) {
+        state.quarters[state.activeQuarter].accounts = defaultAccounts();
       }
       return state.quarters[state.activeQuarter];
     }
@@ -1057,6 +1262,7 @@
     }
 
     function saveState() {
+      localStorage.setItem('quarterly_tracker_multi_q_v9', JSON.stringify(state));
       localStorage.setItem('quarterly_tracker_multi_q_v8', JSON.stringify(state));
     }
 
@@ -1147,6 +1353,137 @@
       const numVal = sanitizeFloat(val);
       getCurrentQuarterData().bankBalance = parseFloat(numVal.toFixed(2)); 
       saveState(); 
+    }
+
+    function addAccount() {
+      const qData = getCurrentQuarterData();
+      const newAcc = {
+        id: 'acc-' + Date.now(),
+        name: 'Nueva Cuenta',
+        initialBalance: 0
+      };
+      qData.accounts.push(newAcc);
+      saveState();
+      render();
+    }
+
+    function deleteAccount(accId) {
+      const qData = getCurrentQuarterData();
+      if (qData.accounts.length <= 1) {
+        alert("Debes mantener al menos una cuenta.");
+        return;
+      }
+      if (confirm("¿Eliminar esta cuenta?")) {
+        qData.accounts = qData.accounts.filter(a => a.id !== accId);
+        saveState();
+        render();
+      }
+    }
+
+    function updateAccountName(accId, name) {
+      const qData = getCurrentQuarterData();
+      const acc = qData.accounts.find(a => a.id === accId);
+      if (acc) {
+        acc.name = name;
+        saveState();
+      }
+    }
+
+    function updateAccountInitialBalance(accId, val) {
+      const qData = getCurrentQuarterData();
+      const acc = qData.accounts.find(a => a.id === accId);
+      if (acc) {
+        acc.initialBalance = sanitizeFloat(val);
+        saveState();
+        render();
+      }
+    }
+
+    /* LÓGICA DE TRANSFERENCIAS ENTRE CUENTAS */
+    function openTransferModal() {
+      const qData = getCurrentQuarterData();
+      if (!qData.accounts || qData.accounts.length < 2) {
+        alert("Necesitas tener al menos dos cuentas bancarias creadas para realizar una transferencia.");
+        return;
+      }
+
+      const fromSelect = document.getElementById('transfer-from-select');
+      const toSelect = document.getElementById('transfer-to-select');
+
+      fromSelect.innerHTML = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+      toSelect.innerHTML = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+
+      if (qData.accounts.length > 1) {
+        toSelect.selectedIndex = 1;
+      }
+
+      document.getElementById('transfer-amount-input').value = '';
+      document.getElementById('transfer-modal').style.display = 'flex';
+    }
+
+    function closeTransferModal() {
+      document.getElementById('transfer-modal').style.display = 'none';
+    }
+
+    function submitTransfer() {
+      const qData = getCurrentQuarterData();
+      const fromId = document.getElementById('transfer-from-select').value;
+      const toId = document.getElementById('transfer-to-select').value;
+      const amount = sanitizeFloat(document.getElementById('transfer-amount-input').value);
+
+      if (fromId === toId) {
+        alert("La cuenta de origen y destino deben ser diferentes.");
+        return;
+      }
+
+      if (amount <= 0) {
+        alert("Introduce un monto válido mayor a 0.");
+        return;
+      }
+
+      const fromAcc = qData.accounts.find(a => a.id === fromId);
+      const toAcc = qData.accounts.find(a => a.id === toId);
+
+      if (!fromAcc || !toAcc) return;
+
+      // Buscar o crear la categoría de transferencias internas
+      let transCat = qData.categories.find(c => c.id === 'cat-transfers' || c.name.toLowerCase().includes('transferencia'));
+      if (!transCat) {
+        transCat = {
+          id: 'cat-transfers',
+          name: '🔄 Transferencias entre cuentas',
+          percentage: 0,
+          customNote: 'Movimientos internos entre cuentas propias',
+          movements: [],
+          type: 'normal'
+        };
+        qData.categories.push(transCat);
+      }
+
+      const timestamp = Date.now();
+      // Registrar salida en la cuenta origen
+      transCat.movements.push({
+        id: 'm-' + timestamp + '-1',
+        type: '-',
+        amount: amount,
+        desc: `Transf. a ${toAcc.name}`,
+        accountId: fromAcc.id
+      });
+
+      // Registrar entrada en la cuenta destino
+      transCat.movements.push({
+        id: 'm-' + timestamp + '-2',
+        type: '+',
+        amount: amount,
+        desc: `Transf. desde ${fromAcc.name}`,
+        accountId: toAcc.id
+      });
+
+      qData.bankBalance = calculateAutoBankBalance(qData);
+      syncFutureQuarters(state.activeQuarter);
+      saveState();
+      render();
+      closeTransferModal();
     }
 
     function openAddCatModal() {
@@ -1324,6 +1661,7 @@
       const lines = text.split('\n');
       const qData = getCurrentQuarterData();
       const cat = qData.categories.find(c => c.id === targetPasteCatId);
+      const defaultAccId = (qData.accounts && qData.accounts.length > 0) ? qData.accounts[0].id : '';
 
       if (cat) {
         let addedCount = 0;
@@ -1351,7 +1689,8 @@
                 id: 'm-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
                 type: movType,
                 amount: amount,
-                desc: desc
+                desc: desc,
+                accountId: defaultAccId
               });
               addedCount++;
             }
@@ -1374,12 +1713,13 @@
       const type = form.type.value;
       const desc = form.desc.value.trim();
       const amount = sanitizeFloat(form.amount.value);
+      const accountId = form.account ? form.account.value : '';
       if (!desc || amount <= 0) return;
 
       const qData = getCurrentQuarterData();
       const cat = qData.categories.find(c => c.id === catId);
       if (cat) {
-        cat.movements.push({ id: 'm-' + Date.now(), type, amount, desc });
+        cat.movements.push({ id: 'm-' + Date.now(), type, amount, desc, accountId });
         
         if (cat.type === 'income' && type === '+') {
           qData.income = (qData.income || 0) + amount;
@@ -1405,6 +1745,7 @@
           if (field === 'type') mov.type = value;
           else if (field === 'desc') mov.desc = value;
           else if (field === 'amount') mov.amount = sanitizeFloat(value);
+          else if (field === 'accountId') mov.accountId = value;
 
           if (cat.type === 'income') {
             if (oldType === '+' && field === 'amount') {
@@ -1440,6 +1781,51 @@
       }
     }
 
+    function renderAccounts() {
+      const qData = getCurrentQuarterData();
+      const container = document.getElementById('accounts-grid-container');
+      container.innerHTML = '';
+
+      const firstAccId = (qData.accounts && qData.accounts.length > 0) ? qData.accounts[0].id : null;
+
+      qData.accounts.forEach(acc => {
+        let accBalance = acc.initialBalance || 0;
+        
+        // Si es la cuenta principal ("Banco"), incluir capital inicial e ingreso general
+        if (acc.id === firstAccId) {
+          accBalance += (qData.initialCapital || 0) + (qData.income || 0);
+        }
+
+        qData.categories.forEach(cat => {
+          cat.movements.forEach(m => {
+            const isTargetAccount = m.accountId === acc.id || (!m.accountId && acc.id === firstAccId);
+            if (isTargetAccount) {
+              if (m.type === '+') accBalance += m.amount;
+              if (m.type === '-') accBalance -= m.amount;
+            }
+          });
+        });
+
+        const accCard = document.createElement('div');
+        accCard.className = 'account-card-item';
+        accCard.innerHTML = `
+          <div class="account-card-header">
+            <input type="text" class="account-name-input" value="${escapeHtml(acc.name)}" onchange="updateAccountName('${acc.id}', this.value)">
+            <button class="btn-del-account" onclick="deleteAccount('${acc.id}')">&times;</button>
+          </div>
+          <span style="font-size:0.6rem; color:var(--text-muted); font-weight:bold; text-transform:uppercase; margin-top:2px;">Saldo Actual</span>
+          <div style="font-size:0.95rem; font-weight:800; color:${accBalance < 0 ? 'var(--danger)' : 'var(--success)'};">
+            ${formatCurrency(accBalance)}
+          </div>
+          <div style="display:flex; align-items:center; gap:2px; margin-top:2px; border-top: 1px dashed var(--card-border); padding-top:2px;">
+            <span style="font-size:0.58rem; color:var(--text-muted);">Base:</span>
+            <input type="number" inputmode="decimal" step="any" class="account-balance-input" style="font-size:0.7rem; color:var(--text-main);" value="${acc.initialBalance || 0}" onchange="updateAccountInitialBalance('${acc.id}', this.value)">
+          </div>
+        `;
+        container.appendChild(accCard);
+      });
+    }
+
     function render() {
       const qData = getCurrentQuarterData();
       qData.bankBalance = calculateAutoBankBalance(qData);
@@ -1453,13 +1839,27 @@
       document.getElementById('initial-cap-input').value = (qData.initialCapital || 0).toFixed(2);
       document.getElementById('bank-balance-input').value = (qData.bankBalance || 0).toFixed(2);
 
-      let totalGlobalSpent = 0;
+      renderAccounts();
+
+      let overspentTotal = 0;
       qData.categories.forEach(cat => {
-        cat.movements.filter(m => m.type === '-').forEach(m => {
-          totalGlobalSpent += m.amount;
-        });
+        const isIncomeCat = cat.type === 'income';
+        const plusMovements = cat.movements.filter(m => m.type === '+');
+        const minusMovements = cat.movements.filter(m => m.type === '-');
+        
+        const totalPlus = plusMovements.reduce((acc, m) => acc + m.amount, 0);
+        const totalSpentCat = minusMovements.reduce((acc, m) => acc + m.amount, 0);
+
+        let allocatedEUR = isIncomeCat ? totalPlus : (qData.income * (cat.percentage / 100));
+        let totalCatCalculated = allocatedEUR + (isIncomeCat ? 0 : totalPlus);
+        let remainingEUR = totalCatCalculated - totalSpentCat;
+
+        if (remainingEUR < 0) {
+          overspentTotal += Math.abs(remainingEUR);
+        }
       });
-      document.getElementById('total-global-spent').textContent = formatCurrency(totalGlobalSpent);
+      
+      document.getElementById('total-global-spent').textContent = formatCurrency(overspentTotal);
 
       const totalPct = qData.categories
         .filter(c => c.type !== 'income')
@@ -1517,9 +1917,6 @@
           remainingColor = 'var(--danger)';
         }
 
-        const isSpecialCat = cat.name.toLowerCase().includes('invers') || 
-                             cat.name.toLowerCase().includes('ahorro');
-
         const card = document.createElement('article');
         let cardClasses = 'category-card';
         if (isIncomeCat) {
@@ -1535,6 +1932,8 @@
         } else if (cat.bgStyle === 'custom-img' && cat.customImgData) {
           card.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url(${cat.customImgData})`;
         }
+
+        const accountsOptions = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
 
         card.innerHTML = `
           <div class="cat-header">
@@ -1570,12 +1969,10 @@
             </div>
           </div>
 
-          ${isSpecialCat ? `
-            <div class="extra-notes">
-              <label>Anotaciones / Detalles:</label>
-              <textarea placeholder="Escribe detalles aquí..." onchange="updateCatNote('${cat.id}', this.value)">${escapeHtml(cat.customNote || '')}</textarea>
-            </div>
-          ` : ''}
+          <div class="extra-notes">
+            <label>Anotaciones / Detalles:</label>
+            <textarea placeholder="Escribe detalles aquí..." onchange="updateCatNote('${cat.id}', this.value)">${escapeHtml(cat.customNote || '')}</textarea>
+          </div>
 
           <div class="movements-section">
             <ul class="movement-list">
@@ -1585,6 +1982,10 @@
                   <select class="mov-type-select" onchange="updateMovement('${cat.id}', '${m.id}', 'type', this.value)">
                     <option value="-" ${m.type === '-' ? 'selected' : ''}>-</option>
                     <option value="+" ${m.type === '+' ? 'selected' : ''}>+</option>
+                  </select>
+                  <select class="mov-account-select" onchange="updateMovement('${cat.id}', '${m.id}', 'accountId', this.value)">
+                    <option value="" ${!m.accountId ? 'selected' : ''}>General</option>
+                    ${qData.accounts.map(a => `<option value="${a.id}" ${m.accountId === a.id ? 'selected' : ''}>${escapeHtml(a.name)}</option>`).join('')}
                   </select>
                   <input type="text" class="mov-desc-input" value="${escapeHtml(m.desc)}" onchange="updateMovement('${cat.id}', '${m.id}', 'desc', this.value)">
                   <input type="number" inputmode="decimal" step="any" class="mov-amount-input" value="${m.amount}" onchange="updateMovement('${cat.id}', '${m.id}', 'amount', this.value)">
@@ -1598,6 +1999,9 @@
               <select name="type">
                 <option value="-">&minus;</option>
                 <option value="+">+</option>
+              </select>
+              <select name="account">
+                ${accountsOptions}
               </select>
               <input type="text" name="desc" placeholder="Descripción" required>
               <input type="number" inputmode="decimal" step="any" name="amount" placeholder="€" required>
@@ -1622,14 +2026,16 @@
 
     function exportToCSV() {
       const qData = getCurrentQuarterData();
-      let csv = "Trimestre,Tipo,Categoria,Descripcion,Monto (EUR)\n";
+      let csv = "Trimestre,Tipo,Categoria,Cuenta,Descripcion,Monto (EUR)\n";
 
       qData.categories.forEach(cat => {
         if (cat.movements.length === 0) {
-          csv += `"${state.activeQuarter}","N/A","${cat.name}","Sin movimientos","0"\n`;
+          csv += `"${state.activeQuarter}","N/A","${cat.name}","N/A","Sin movimientos","0"\n`;
         } else {
           cat.movements.forEach(m => {
-            csv += `"${state.activeQuarter}","${m.type}","${cat.name}","${m.desc}",${m.amount}\n`;
+            const accObj = qData.accounts.find(a => a.id === m.accountId);
+            const accName = accObj ? accObj.name : 'General';
+            csv += `"${state.activeQuarter}","${m.type}","${cat.name}","${accName}","${m.desc}",${m.amount}\n`;
           });
         }
       });
