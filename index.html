@@ -1101,13 +1101,12 @@
         bankBalance: 0,
         accounts: defaultAccounts(),
         categories: [
-          { id: "cat-deuda", name: "Deuda propia", percentage: 0, customNote: "", movements: [], type: "normal" },
           { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [], type: "normal" },
-          { id: "cat-inversion", name: "5% inversión", percentage: 5, customNote: "", movements: [], type: "normal" },
+          { id: "cat-inversion", name: "10% inversión", percentage: 10, customNote: "", movements: [], type: "normal" },
           { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "", movements: [], type: "normal" },
           { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [], type: "normal" },
           { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [], type: "normal" },
-          { id: "cat-whatever", name: "20% whatever", percentage: 20, customNote: "", movements: [], type: "normal" }
+          { id: "cat-whatever", name: "15% whatever", percentage: 15, customNote: "", movements: [], type: "normal" }
         ]
       };
     }
@@ -1399,7 +1398,6 @@
       }
     }
 
-    /* LÓGICA DE TRANSFERENCIAS ENTRE CUENTAS */
     function openTransferModal() {
       const qData = getCurrentQuarterData();
       if (!qData.accounts || qData.accounts.length < 2) {
@@ -1446,7 +1444,6 @@
 
       if (!fromAcc || !toAcc) return;
 
-      // Buscar o crear la categoría de transferencias internas
       let transCat = qData.categories.find(c => c.id === 'cat-transfers' || c.name.toLowerCase().includes('transferencia'));
       if (!transCat) {
         transCat = {
@@ -1461,7 +1458,6 @@
       }
 
       const timestamp = Date.now();
-      // Registrar salida en la cuenta origen
       transCat.movements.push({
         id: 'm-' + timestamp + '-1',
         type: '-',
@@ -1470,7 +1466,6 @@
         accountId: fromAcc.id
       });
 
-      // Registrar entrada en la cuenta destino
       transCat.movements.push({
         id: 'm-' + timestamp + '-2',
         type: '+',
@@ -1791,7 +1786,6 @@
       qData.accounts.forEach(acc => {
         let accBalance = acc.initialBalance || 0;
         
-        // Si es la cuenta principal ("Banco"), incluir capital inicial e ingreso general
         if (acc.id === firstAccId) {
           accBalance += (qData.initialCapital || 0) + (qData.income || 0);
         }
