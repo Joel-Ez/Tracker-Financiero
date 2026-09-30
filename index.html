@@ -633,17 +633,21 @@
       cursor: pointer;
       outline: none;
       padding: 2px;
+      width: 24px;
+      flex-shrink: 0;
     }
 
     .mov-account-select {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       font-weight: 600;
       cursor: pointer;
       outline: none;
-      max-width: 75px;
+      width: 50px;
+      flex-shrink: 0;
+      text-overflow: ellipsis;
     }
 
     .mov-type-select option, .mov-account-select option {
@@ -652,13 +656,14 @@
     }
 
     .mov-desc-input {
-      flex-grow: 1;
+      flex: 1;
+      min-width: 0;
       background: transparent;
       border: none;
       color: var(--text-main);
-      font-size: 0.8rem;
+      font-size: 0.88rem;
+      font-weight: 500;
       outline: none;
-      min-width: 0;
       border-bottom: 1px solid transparent;
     }
 
@@ -667,7 +672,8 @@
     }
 
     .mov-amount-input {
-      width: 70px;
+      width: 48px;
+      flex-shrink: 0;
       background: transparent;
       border: none;
       color: var(--text-main);
@@ -689,20 +695,36 @@
       cursor: pointer;
       font-size: 1rem;
       padding: 2px 4px;
+      flex-shrink: 0;
     }
 
     .mov-form {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       margin-top: 4px;
+      align-items: center;
     }
 
-    .mov-form select {
+    .mov-form select[name="type"] {
+      width: 32px;
+      flex-shrink: 0;
       background: var(--input-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
-      padding: 8px;
+      padding: 8px 2px;
       border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .mov-form select[name="account"] {
+      width: 58px;
+      flex-shrink: 0;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 1px;
+      border-radius: 6px;
+      font-size: 0.7rem;
       font-weight: bold;
     }
 
@@ -711,36 +733,41 @@
       color: var(--text-main);
     }
 
-    .mov-form input[type="text"] {
-      flex-grow: 1;
+    .mov-form input[name="desc"] {
+      flex: 1;
+      min-width: 0;
       background: var(--input-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
       padding: 8px;
       border-radius: 6px;
-      font-size: 0.8rem;
-      width: 30%;
+      font-size: 0.88rem;
+      font-weight: 500;
     }
 
-    .mov-form input[type="number"] {
-      width: 75px;
+    .mov-form input[name="amount"] {
+      width: 48px;
+      flex-shrink: 0;
       background: var(--input-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
-      padding: 8px;
+      padding: 8px 4px;
       border-radius: 6px;
       font-size: 0.8rem;
+      text-align: right;
     }
 
     .btn-add {
       background: var(--primary);
       color: white;
       border: none;
-      padding: 0 12px;
+      padding: 0 10px;
+      height: 35px;
       border-radius: 6px;
       font-weight: bold;
       font-size: 1.1rem;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .actions-bar {
@@ -792,14 +819,22 @@
       cursor: pointer;
     }
 
-    .btn-delete-cat {
+    .btn-duplicate-cat, .btn-delete-cat {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       padding: 2px 4px;
       cursor: pointer;
       flex-shrink: 0;
+    }
+
+    .btn-duplicate-cat:hover {
+      color: var(--primary);
+    }
+
+    .btn-delete-cat:hover {
+      color: var(--danger);
     }
 
     .modal-overlay {
@@ -959,8 +994,8 @@
         <input type="number" inputmode="decimal" step="any" id="initial-cap-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateInitialCap(this.value)">
       </div>
       <div style="border:none; padding:0; background:transparent;">
-        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">Saldo en Banco (€)</span>
-        <input type="number" inputmode="decimal" step="any" id="bank-balance-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateBankBalanceManual(this.value)">
+        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">SALDO TOTAL (€)</span>
+        <input type="number" inputmode="decimal" step="any" id="bank-balance-input" readonly style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;">
       </div>
       
       <div class="global-summary-item full-width">
@@ -1096,7 +1131,10 @@
       return [
         { id: "acc-banco", name: "Banco", initialBalance: 0 },
         { id: "acc-revolut", name: "Revolut", initialBalance: 0 },
-        { id: "acc-wise", name: "Wise", initialBalance: 0 }
+        { id: "acc-revolut-ahorros", name: "Revolut Ahorros", initialBalance: 0 },
+        { id: "acc-wise", name: "Wise", initialBalance: 0 },
+        { id: "acc-vinted", name: "Vinted", initialBalance: 0 },
+        { id: "acc-mintos", name: "Mintos", initialBalance: 0 }
       ];
     }
 
@@ -1161,16 +1199,34 @@
       return (cleanNum % 1 === 0) ? cleanNum.toFixed(0) : cleanNum.toString();
     }
 
-    function calculateAutoBankBalance(qData) {
-      let totalSpent = 0;
-      let totalPlus = 0;
+    function calculateAccountBalance(acc, qData) {
+      let accBalance = acc.initialBalance || 0;
+      const firstAccId = (qData.accounts && qData.accounts.length > 0) ? qData.accounts[0].id : null;
+
       qData.categories.forEach(cat => {
         cat.movements.forEach(m => {
-          if (m.type === '-') totalSpent += m.amount;
-          if (m.type === '+') totalPlus += m.amount;
+          const isTargetAccount = m.accountId === acc.id || (!m.accountId && acc.id === firstAccId);
+          if (isTargetAccount) {
+            if (m.type === '+') accBalance += m.amount;
+            if (m.type === '-') accBalance -= m.amount;
+          }
         });
       });
-      return (qData.initialCapital || 0) + (qData.income || 0) + totalPlus - totalSpent;
+      return accBalance;
+    }
+
+    // FILTRO ESTRICTO: Únicamente suma saldos de cuentas con nombre Banco, Revolut o Revolut Ahorros
+    function calculateAutoBankBalance(qData) {
+      let totalMainBalance = 0;
+      const allowedNames = ["banco", "revolut", "revolut ahorros", "revolut ahorro"];
+
+      qData.accounts.forEach(acc => {
+        const cleanName = (acc.name || "").trim().toLowerCase();
+        if (allowedNames.includes(cleanName)) {
+          totalMainBalance += calculateAccountBalance(acc, qData);
+        }
+      });
+      return totalMainBalance;
     }
 
     function syncFutureQuarters(changedQuarterKey) {
@@ -1249,7 +1305,7 @@
       const metaTheme = document.querySelector('meta[name="theme-color"]');
       if (state.theme === "light") {
         document.body.classList.add("light-theme");
-        document.getElementById("theme-icon").textContent = "☀️";
+        document.getElementById("theme-icon").textContent = "☀️️";
         document.getElementById("theme-text").textContent = "Modo Claro";
         if (metaTheme) metaTheme.setAttribute('content', '#f1f5f9');
       } else {
@@ -1324,28 +1380,35 @@
 
     function submitAddIncome() {
       const input = document.getElementById('income-add-input');
-      const targetAccId = document.getElementById('income-account-select').value;
+      const targetAccountId = document.getElementById('income-account-select').value;
       const addVal = sanitizeFloat(input.value);
       
       if (addVal > 0) {
         const qData = getCurrentQuarterData();
         pushIncomeToSessionHistory(qData.income || 0);
-
+        
         qData.income = (qData.income || 0) + addVal;
 
-        let targetCat = qData.categories.find(c => c.type === 'income') || qData.categories[0];
-        if (targetCat) {
-          const selectedAccObj = qData.accounts.find(a => a.id === targetAccId);
-          const accName = selectedAccObj ? selectedAccObj.name : 'Cuenta';
-          
-          targetCat.movements.push({
-            id: 'm-' + Date.now(),
-            type: '+',
-            amount: addVal,
-            desc: `Ingreso a ${accName}`,
-            accountId: targetAccId
-          });
+        let incCat = qData.categories.find(c => c.type === 'income');
+        if (!incCat) {
+          incCat = {
+            id: 'cat-external-inc',
+            name: 'Ingresos / Ganancias',
+            percentage: 0,
+            customNote: '',
+            movements: [],
+            type: 'income'
+          };
+          qData.categories.push(incCat);
         }
+
+        incCat.movements.push({
+          id: 'm-' + Date.now(),
+          type: '+',
+          amount: addVal,
+          desc: 'Ingreso rápido',
+          accountId: targetAccountId
+        });
 
         qData.bankBalance = calculateAutoBankBalance(qData);
         syncFutureQuarters(state.activeQuarter);
@@ -1374,12 +1437,6 @@
       syncFutureQuarters(state.activeQuarter);
       saveState(); 
       render();
-    }
-
-    function updateBankBalanceManual(val) { 
-      const numVal = sanitizeFloat(val);
-      getCurrentQuarterData().bankBalance = parseFloat(numVal.toFixed(2)); 
-      saveState(); 
     }
 
     function addAccount() {
@@ -1412,7 +1469,9 @@
       const acc = qData.accounts.find(a => a.id === accId);
       if (acc) {
         acc.name = name;
+        qData.bankBalance = calculateAutoBankBalance(qData);
         saveState();
+        render();
       }
     }
 
@@ -1421,6 +1480,7 @@
       const acc = qData.accounts.find(a => a.id === accId);
       if (acc) {
         acc.initialBalance = sanitizeFloat(val);
+        qData.bankBalance = calculateAutoBankBalance(qData);
         saveState();
         render();
       }
@@ -1593,6 +1653,19 @@
       render();
     }
 
+    function duplicateCategory(catId) {
+      const qData = getCurrentQuarterData();
+      const originalCat = qData.categories.find(c => c.id === catId);
+      if (originalCat) {
+        const duplicatedCat = JSON.parse(JSON.stringify(originalCat));
+        duplicatedCat.id = 'cat-' + Date.now();
+        duplicatedCat.name = `${originalCat.name} (Copia)`;
+        qData.categories.push(duplicatedCat);
+        saveState();
+        render();
+      }
+    }
+
     function handleCardClick(event, catId) {
       const interactiveElements = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'OPTION'];
       if (interactiveElements.includes(event.target.tagName) || event.target.closest('.drag-handle')) {
@@ -1743,10 +1816,6 @@
       const cat = qData.categories.find(c => c.id === catId);
       if (cat) {
         cat.movements.push({ id: 'm-' + Date.now(), type, amount, desc, accountId });
-        
-        if (cat.type === 'income' && type === '+') {
-          qData.income = (qData.income || 0) + amount;
-        }
 
         qData.bankBalance = calculateAutoBankBalance(qData);
         syncFutureQuarters(state.activeQuarter);
@@ -1762,22 +1831,10 @@
       if (cat) {
         const mov = cat.movements.find(m => m.id === movId);
         if (mov) {
-          const oldAmount = mov.amount;
-          const oldType = mov.type;
-
           if (field === 'type') mov.type = value;
           else if (field === 'desc') mov.desc = value;
           else if (field === 'amount') mov.amount = sanitizeFloat(value);
           else if (field === 'accountId') mov.accountId = value;
-
-          if (cat.type === 'income') {
-            if (oldType === '+' && field === 'amount') {
-              qData.income = (qData.income || 0) - oldAmount + mov.amount;
-            } else if (field === 'type') {
-              if (oldType === '+' && value === '-') qData.income = (qData.income || 0) - oldAmount;
-              if (oldType === '-' && value === '+') qData.income = (qData.income || 0) + mov.amount;
-            }
-          }
 
           qData.bankBalance = calculateAutoBankBalance(qData);
           syncFutureQuarters(state.activeQuarter);
@@ -1791,11 +1848,6 @@
       const qData = getCurrentQuarterData();
       const cat = qData.categories.find(c => c.id === catId);
       if (cat) {
-        const mov = cat.movements.find(m => m.id === movId);
-        if (mov && cat.type === 'income' && mov.type === '+') {
-          qData.income = Math.max(0, (qData.income || 0) - mov.amount);
-        }
-
         cat.movements = cat.movements.filter(m => m.id !== movId);
         qData.bankBalance = calculateAutoBankBalance(qData);
         syncFutureQuarters(state.activeQuarter);
@@ -1809,20 +1861,8 @@
       const container = document.getElementById('accounts-grid-container');
       container.innerHTML = '';
 
-      const firstAccId = (qData.accounts && qData.accounts.length > 0) ? qData.accounts[0].id : null;
-
       qData.accounts.forEach(acc => {
-        let accBalance = acc.initialBalance || 0;
-
-        qData.categories.forEach(cat => {
-          cat.movements.forEach(m => {
-            const isTargetAccount = m.accountId === acc.id || (!m.accountId && acc.id === firstAccId);
-            if (isTargetAccount) {
-              if (m.type === '+') accBalance += m.amount;
-              if (m.type === '-') accBalance -= m.amount;
-            }
-          });
-        });
+        let accBalance = calculateAccountBalance(acc, qData);
 
         const accCard = document.createElement('div');
         accCard.className = 'account-card-item';
@@ -1962,7 +2002,8 @@
               <input type="number" inputmode="decimal" step="any" value="${formatPercentageInput(displayedPct)}" ${isIncomeCat ? 'readonly style="opacity:0.8;"' : `onchange="updateCatPercentage('${cat.id}', this.value)"`}>
               <span>%</span>
             </div>
-            <button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')">&times;</button>
+            <button class="btn-duplicate-cat" onclick="duplicateCategory('${cat.id}')" title="Duplicar Categoría">📋</button>
+            <button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')" title="Eliminar Categoría">&times;</button>
           </div>
 
           <div class="cat-summary">
@@ -2002,7 +2043,7 @@
                     <option value="+" ${m.type === '+' ? 'selected' : ''}>+</option>
                   </select>
                   <select class="mov-account-select" onchange="updateMovement('${cat.id}', '${m.id}', 'accountId', this.value)">
-                    <option value="" ${!m.accountId ? 'selected' : ''}>General</option>
+                    <option value="" ${!m.accountId ? 'selected' : ''}>Gral</option>
                     ${qData.accounts.map(a => `<option value="${a.id}" ${m.accountId === a.id ? 'selected' : ''}>${escapeHtml(a.name)}</option>`).join('')}
                   </select>
                   <input type="text" class="mov-desc-input" value="${escapeHtml(m.desc)}" onchange="updateMovement('${cat.id}', '${m.id}', 'desc', this.value)">
@@ -2021,7 +2062,7 @@
               <select name="account">
                 ${accountsOptions}
               </select>
-              <input type="text" name="desc" placeholder="Descripción" required>
+              <input type="text" name="desc" placeholder="Descripción del gasto..." required>
               <input type="number" inputmode="decimal" step="any" name="amount" placeholder="€" required>
               <button type="submit" class="btn-add">+</button>
             </form>
@@ -2072,7 +2113,7 @@
       doc.text(`Tracker Financiero - Trimestre ${state.activeQuarter}`, 14, 15);
       
       doc.setFontSize(10);
-      doc.text(`Ingresos: ${formatCurrency(qData.income)}  |  Capital Inicial: ${formatCurrency(qData.initialCapital)}  |  Saldo Banco: ${formatCurrency(qData.bankBalance)}`, 14, 23);
+      doc.text(`Ingresos: ${formatCurrency(qData.income)}  |  Capital Inicial: ${formatCurrency(qData.initialCapital)}  |  Saldo Total: ${formatCurrency(qData.bankBalance)}`, 14, 23);
 
       const tableRows = [];
       qData.categories.forEach(cat => {
