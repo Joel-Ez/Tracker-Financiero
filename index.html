@@ -1139,7 +1139,7 @@
     }
 
     function createEmptyQuarter() {
-      return {
+      const q = {
         income: 0,
         initialCapital: 0,
         bankBalance: 0,
@@ -1153,6 +1153,9 @@
           { id: "cat-whatever", name: "15% whatever", percentage: 15, customNote: "", movements: [], type: "normal" }
         ]
       };
+      // Al inicio, el capital inicial es igual al saldo total inicial de las cuentas principales
+      q.initialCapital = calculateAutoBankBalance(q);
+      return q;
     }
 
     let state = {
@@ -1215,7 +1218,7 @@
       return accBalance;
     }
 
-    // FILTRO ESTRICTO: Únicamente suma saldos de cuentas con nombre Banco, Revolut o Revolut Ahorros
+    // FILTRO ESTRICTO: Únicamente suma saldos de cuentas con nombre Banco, Revolut o Revolut Ahorros (Excluye Mintos)
     function calculateAutoBankBalance(qData) {
       let totalMainBalance = 0;
       const allowedNames = ["banco", "revolut", "revolut ahorros", "revolut ahorro"];
@@ -1242,6 +1245,7 @@
 
         if (currentData && nextData) {
           const finalBalance = calculateAutoBankBalance(currentData);
+          // Al sincronizar trimestres o meses nuevos, el capital inicial arranca igual al saldo total de inicio
           nextData.initialCapital = parseFloat(finalBalance.toFixed(2));
           nextData.bankBalance = calculateAutoBankBalance(nextData);
         }
@@ -1305,7 +1309,7 @@
       const metaTheme = document.querySelector('meta[name="theme-color"]');
       if (state.theme === "light") {
         document.body.classList.add("light-theme");
-        document.getElementById("theme-icon").textContent = "☀️️";
+        document.getElementById("theme-icon").textContent = "☀";
         document.getElementById("theme-text").textContent = "Modo Claro";
         if (metaTheme) metaTheme.setAttribute('content', '#f1f5f9');
       } else {
@@ -1385,30 +1389,57 @@
       
       if (addVal > 0) {
         const qData = getCurrentQuarterData();
-        pushIncomeToSessionHistory(qData.income || 0);
-        
-        qData.income = (qData.income || 0) + addVal;
+        const targetAcc = qData.accounts.find(a => a.id === targetAccountId);
+        const isMintos = targetAcc && targetAcc.name.trim().toLowerCase().includes('mintos');
 
-        let incCat = qData.categories.find(c => c.type === 'income');
-        if (!incCat) {
-          incCat = {
-            id: 'cat-external-inc',
-            name: 'Ingresos / Ganancias',
-            percentage: 0,
-            customNote: '',
-            movements: [],
-            type: 'income'
-          };
-          qData.categories.push(incCat);
+        // Si es Mintos, NO se agrega al ingreso repartible ni a las categorías, sólo a la cuenta individual de Mintos
+        if (!isMintos) {
+          pushIncomeToSessionHistory(qData.income || 0);
+          qData.income = (qData.income || 0) + addVal;
+
+          let incCat = qData.categories.find(c => c.type === 'income');
+          if (!incCat) {
+            incCat = {
+              id: 'cat-external-inc',
+              name: 'Ingresos / Ganancias',
+              percentage: 0,
+              customNote: '',
+              movements: [],
+              type: 'income'
+            };
+            qData.categories.push(incCat);
+          }
+
+          incCat.movements.push({
+            id: 'm-' + Date.now(),
+            type: '+',
+            amount: addVal,
+            desc: 'Ingreso rápido',
+            accountId: targetAccountId
+          });
+        } else {
+          // Si es Mintos, añade el movimiento solo a Mintos (sin categorizar/repartir)
+          let mintosCat = qData.categories.find(c => c.id === 'cat-mintos-direct');
+          if (!mintosCat) {
+            mintosCat = {
+              id: 'cat-mintos-direct',
+              name: '📈 Mintos (Ganancias Directas)',
+              percentage: 0,
+              customNote: 'Ganancias registradas exclusivamente en Mintos',
+              movements: [],
+              type: 'income'
+            };
+            qData.categories.push(mintosCat);
+          }
+
+          mintosCat.movements.push({
+            id: 'm-' + Date.now(),
+            type: '+',
+            amount: addVal,
+            desc: 'Ganancia Mintos',
+            accountId: targetAccountId
+          });
         }
-
-        incCat.movements.push({
-          id: 'm-' + Date.now(),
-          type: '+',
-          amount: addVal,
-          desc: 'Ingreso rápido',
-          accountId: targetAccountId
-        });
 
         qData.bankBalance = calculateAutoBankBalance(qData);
         syncFutureQuarters(state.activeQuarter);
@@ -1919,8 +1950,9 @@
       
       document.getElementById('total-global-spent').textContent = formatCurrency(overspentTotal);
 
+      // Excluir categoría Mintos directas o ingresos especiales que no entran en reparto
       const totalPct = qData.categories
-        .filter(c => c.type !== 'income')
+        .filter(c => c.type !== 'income' && c.id !== 'cat-mintos-direct')
         .reduce((acc, c) => acc + (c.percentage || 0), 0);
 
       const pctStatusText = document.getElementById('percentage-status-text');
