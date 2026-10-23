@@ -1,2195 +1,1307 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
-  <title>Tracker Financiero Trimestral</title>
-  
-  <!-- Librerías para Exportación PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  
-  <!-- Librería para Arrastre (Drag and Drop) nativo y táctil móvil -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --orange-brand: #ff9800;
-      --input-bg: #0f172a;
-      --radius: 12px;
-      --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    body.light-theme {
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --card-border: #cbd5e1;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --input-bg: #f8fafc;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      font-family: var(--font);
-      padding-bottom: calc(40px + env(safe-area-inset-bottom, 20px));
-      line-height: 1.4;
-      -webkit-tap-highlight-color: transparent;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
-    .container {
-      max-width: 100%;
-      margin: 0;
-      padding: 0 12px;
-    }
-
-    header.sticky-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background-color: var(--bg-color);
-      border-bottom: none;
-      padding-top: 15px;
-      padding-bottom: 12px;
-      margin-bottom: 16px;
-      transition: background-color 0.3s ease;
-    }
-
-    .header-top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .theme-toggle-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .header-grid-minimal {
-      display: flex;
-      gap: 8px;
-    }
-
-    .stat-card-quarter {
-      flex: 1.2;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      padding: 8px 10px;
-      border-radius: var(--radius);
-      min-width: 0;
-    }
-
-    .stat-card-income {
-      flex: 1.8;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      padding: 8px 10px;
-      border-radius: var(--radius);
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .stat-card-quarter label, .stat-card-income label {
-      display: block;
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-bottom: 2px;
-    }
-
-    .stat-card-quarter select {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 0.85rem;
-      font-weight: 700;
-      outline: none;
-      cursor: pointer;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .income-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .income-input-editable {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 1.1rem;
-      font-weight: 800;
-      outline: none;
-      min-width: 0;
-      border-bottom: 1px dashed transparent;
-    }
-
-    .income-input-editable:focus {
-      border-bottom-color: var(--primary);
-    }
-
-    .income-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-undo {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      border-radius: 8px;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1rem;
-      flex-shrink: 0;
-    }
-
-    .btn-undo:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    .btn-add-income {
-      background: var(--orange-brand);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      width: 32px;
-      height: 32px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .stat-card-quarter select option {
-      background: var(--card-bg);
-      color: var(--text-main);
-    }
-
-    .global-summary-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 12px;
-      margin-bottom: 16px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-
-    .global-summary-item {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .global-summary-item span {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .global-summary-item.full-width {
-      grid-column: span 2;
-      border-top: 1px solid var(--card-border);
-      padding-top: 8px;
-      margin-top: 4px;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .global-summary-item.full-width strong {
-      font-size: 1.15rem;
-      color: var(--orange-brand);
-    }
-
-    .accounts-section {
-      grid-column: span 2;
-      border-top: 1px solid var(--card-border);
-      padding-top: 10px;
-      margin-top: 4px;
-    }
-
-    .accounts-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .accounts-header span {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .accounts-btn-group {
-      display: flex;
-      gap: 4px;
-    }
-
-    .btn-add-account {
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 3px 8px;
-      font-size: 0.72rem;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .btn-transfer-account {
-      background: var(--card-bg);
-      border: 1px solid var(--primary);
-      color: var(--primary);
-      border-radius: 6px;
-      padding: 3px 8px;
-      font-size: 0.72rem;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .accounts-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-
-    .account-card-item {
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 6px 8px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    .account-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .account-name-input {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 0.75rem;
-      font-weight: 700;
-      outline: none;
-      width: 80%;
-    }
-
-    .btn-del-account {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .account-balance-input {
-      background: transparent;
-      border: none;
-      color: var(--success);
-      font-size: 0.95rem;
-      font-weight: 800;
-      outline: none;
-      width: 100%;
-      margin-top: 2px;
-    }
-
-    .percentage-bar-container {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 6px 10px;
-      margin-bottom: 16px;
-    }
-
-    .percentage-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-      font-weight: 700;
-      font-size: 0.75rem;
-    }
-
-    .pct-status-badge {
-      background-color: #38bdf8;
-      color: #0f172a !important;
-      padding: 1px 6px;
-      border-radius: 6px;
-      font-weight: 800;
-      font-size: 0.7rem;
-    }
-
-    body.light-theme .pct-status-badge {
-      background-color: #0284c7;
-      color: #ffffff !important;
-    }
-
-    .pct-status-badge.status-ok { background-color: #10b981; color: #042f2e !important; }
-    .pct-status-badge.status-warning { background-color: #f59e0b; color: #451a03 !important; }
-    .pct-status-badge.status-danger { background-color: #ef4444; color: #450a0a !important; }
-
-    .progress-outer {
-      width: 100%;
-      height: 6px;
-      background: var(--card-border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .progress-inner {
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-
-    .status-ok-bar { background-color: var(--success); }
-    .status-warning-bar { background-color: var(--warning); }
-    .status-danger-bar { background-color: var(--danger); }
-
-    .categories-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      touch-action: pan-y;
-    }
-
-    .category-card {
-      position: relative;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      overflow: hidden;
-      background-size: cover;
-      background-position: center;
-      cursor: grab;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-
-    .category-card:active {
-      cursor: grabbing;
-    }
-
-    .sortable-ghost {
-      opacity: 0.4;
-      border: 2px dashed var(--primary) !important;
-    }
-
-    .sortable-drag {
-      opacity: 0.9;
-      transform: scale(1.02);
-    }
-
-    .drag-handle {
-      cursor: grab;
-      padding: 4px 4px 4px 0;
-      font-size: 1.1rem;
-      color: var(--text-muted);
-      user-select: none;
-      flex-shrink: 0;
-    }
-
-    .category-card.income-type {
-      border: 1px solid rgba(16, 185, 129, 0.5);
-    }
-
-    .category-card.bg-money {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" opacity="0.12"><rect width="200" height="150" fill="%2310b981"/><path d="M10 10h180v130H10z" fill="none" stroke="%23ffffff" stroke-width="4"/><circle cx="100" cy="75" r="30" fill="none" stroke="%23ffffff" stroke-width="4"/><text x="100" y="85" font-size="30" font-weight="bold" fill="%23ffffff" text-anchor="middle">$</text></svg>');
-      background-repeat: repeat;
-      background-size: 120px;
-    }
-
-    .cat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .cat-title-input {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 1.05rem;
-      font-weight: 800;
-      flex: 1;
-      min-width: 0;
-      outline: none;
-      border-bottom: 1px solid transparent;
-      text-overflow: ellipsis;
-    }
-
-    .cat-title-input:focus {
-      border-bottom-color: var(--primary);
-    }
-
-    .pct-input-group {
-      display: flex;
-      align-items: center;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 6px;
-      padding: 2px 4px;
-      width: 48px;
-      flex-shrink: 0;
-    }
-
-    .pct-input-group input {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      text-align: right;
-      font-weight: 700;
-      font-size: 0.8rem;
-      outline: none;
-      padding: 0;
-    }
-
-    .pct-input-group span {
-      font-size: 0.75rem;
-      margin-left: 1px;
-    }
-
-    .cat-summary {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
-      background: var(--input-bg);
-      padding: 10px 8px;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      align-items: center;
-    }
-
-    .cat-summary div span {
-      display: block;
-      color: var(--text-muted);
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .cat-summary div strong {
-      font-size: 0.85rem;
-    }
-
-    .summary-actions-cell {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 4px;
-    }
-
-    .btn-action-icon {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-
-    .btn-action-icon:hover {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #fff;
-    }
-
-    .total-highlight {
-      color: var(--orange-brand) !important;
-      font-weight: 800;
-      display: block;
-      font-size: 0.7rem;
-      margin-top: 2px;
-    }
-
-    .extra-notes {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .extra-notes label {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .extra-notes textarea {
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 6px;
-      color: var(--text-main);
-      padding: 8px;
-      font-family: inherit;
-      font-size: 0.8rem;
-      resize: vertical;
-      min-height: 44px;
-      outline: none;
-    }
-
-    .movements-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .movement-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 250px;
-      overflow-y: auto;
-    }
-
-    .movement-item {
-      display: flex;
-      align-items: center;
-      background: var(--input-bg);
-      padding: 4px 6px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      gap: 4px;
-    }
-
-    .movement-item.plus { border-left: 3px solid var(--success); }
-    .movement-item.minus { border-left: 3px solid var(--danger); }
-
-    .mov-type-select {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-weight: bold;
-      font-size: 0.85rem;
-      cursor: pointer;
-      outline: none;
-      padding: 2px;
-      width: 24px;
-      flex-shrink: 0;
-    }
-
-    .mov-account-select {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      font-weight: 600;
-      cursor: pointer;
-      outline: none;
-      width: 50px;
-      flex-shrink: 0;
-      text-overflow: ellipsis;
-    }
-
-    .mov-type-select option, .mov-account-select option {
-      background: var(--card-bg);
-      color: var(--text-main);
-    }
-
-    .mov-desc-input {
-      flex: 1;
-      min-width: 0;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 0.88rem;
-      font-weight: 500;
-      outline: none;
-      border-bottom: 1px solid transparent;
-    }
-
-    .mov-desc-input:focus {
-      border-bottom-color: var(--primary);
-    }
-
-    .mov-amount-input {
-      width: 48px;
-      flex-shrink: 0;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-weight: 600;
-      font-size: 0.8rem;
-      text-align: right;
-      outline: none;
-      border-bottom: 1px solid transparent;
-    }
-
-    .mov-amount-input:focus {
-      border-bottom-color: var(--primary);
-    }
-
-    .btn-icon {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 2px 4px;
-      flex-shrink: 0;
-    }
-
-    .mov-form {
-      display: flex;
-      gap: 4px;
-      margin-top: 4px;
-      align-items: center;
-    }
-
-    .mov-form select[name="type"] {
-      width: 32px;
-      flex-shrink: 0;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 8px 2px;
-      border-radius: 6px;
-      font-weight: bold;
-    }
-
-    .mov-form select[name="account"] {
-      width: 58px;
-      flex-shrink: 0;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 8px 1px;
-      border-radius: 6px;
-      font-size: 0.7rem;
-      font-weight: bold;
-    }
-
-    .mov-form select option {
-      background: var(--card-bg);
-      color: var(--text-main);
-    }
-
-    .mov-form input[name="desc"] {
-      flex: 1;
-      min-width: 0;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 0.88rem;
-      font-weight: 500;
-    }
-
-    .mov-form input[name="amount"] {
-      width: 48px;
-      flex-shrink: 0;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 8px 4px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      text-align: right;
-    }
-
-    .btn-add {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0 10px;
-      height: 35px;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 1.1rem;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .actions-bar {
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .export-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .btn-main {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: var(--radius);
-      font-weight: 600;
-      text-align: center;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    .btn-secondary {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 10px;
-      border-radius: var(--radius);
-      font-weight: 600;
-      text-align: center;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    .btn-danger-outline {
-      background: transparent;
-      border: 1px solid var(--danger);
-      color: var(--danger);
-      padding: 10px;
-      border-radius: var(--radius);
-      font-weight: 600;
-      text-align: center;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    .btn-duplicate-cat, .btn-delete-cat {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-      padding: 2px 4px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .btn-duplicate-cat:hover {
-      color: var(--primary);
-    }
-
-    .btn-delete-cat:hover {
-      color: var(--danger);
-    }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 16px;
-    }
-
-    .modal-content {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px;
-      width: 100%;
-      max-width: 360px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
-
-    .modal-content h3 {
-      font-size: 1rem;
-      margin-bottom: 12px;
-      color: var(--text-main);
-    }
-
-    .modal-input {
-      width: 100%;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      outline: none;
-      margin-bottom: 12px;
-    }
-
-    .modal-select {
-      width: 100%;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: bold;
-      outline: none;
-      margin-bottom: 12px;
-    }
-
-    .modal-textarea {
-      width: 100%;
-      height: 120px;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 10px;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.85rem;
-      outline: none;
-      margin-bottom: 12px;
-      resize: vertical;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .btn-modal-cancel {
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-modal-submit {
-      background: var(--orange-brand);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .modal-option-btn {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 8px;
-      background: var(--input-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      text-align: left;
-    }
-
-    .modal-option-btn:hover {
-      border-color: var(--primary);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driving Theory B - Planner</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #121214;
+            --input-bg: #1c1c1e;
+            --subtext: #8e8e93;
+            --border-color: #2c2c2e;
+            
+            --pill-blue: #1d4ed8;
+            --pill-orange: #b45309;
+            --pill-red: #b91c1c;
+            --pill-green: #047857;
+            --pill-purple: #6d28d9;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            max-width: 420px;
+            width: 100%;
+            min-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 40px;
+            margin-bottom: 12px;
+        }
+
+        .btn-back {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px 4px 0;
+            visibility: hidden;
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            height: 4px;
+            background-color: var(--input-bg);
+            border-radius: 2px;
+            margin: 0 16px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 20%;
+            background-color: #ffffff;
+            transition: width 0.3s ease;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .screen { display: none; flex-direction: column; height: 100%; flex: 1; }
+        .screen.active { display: flex; }
+
+        h1.step-title {
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            margin: 8px 0;
+        }
+
+        p.step-subtitle {
+            text-align: center;
+            color: var(--subtext);
+            font-size: 14px;
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+        }
+
+        .external-link {
+            display: block;
+            text-align: center;
+            color: #38bdf8;
+            font-size: 14px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: opacity 0.2s;
+        }
+
+        .external-link:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .hero-card {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .hero-card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+
+        .hero-icon {
+            width: 60px;
+            height: 40px;
+            border: 3px solid #38bdf8;
+            border-radius: 8px;
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .hero-icon::after {
+            content: '';
+            position: absolute;
+            bottom: 4px; left: 6px; right: 6px;
+            height: 4px;
+            background: #38bdf8;
+            border-radius: 2px;
+        }
+
+        .hero-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .option-card {
+            background-color: var(--card-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-card.selected {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        .option-card.selected .sub-label { color: #555555; }
+        .option-info { display: flex; flex-direction: column; }
+        .main-label { font-size: 16px; font-weight: 600; }
+        .sub-label { font-size: 13px; color: var(--subtext); margin-top: 2px; }
+
+        .radio-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .option-card.selected .radio-circle {
+            border-color: #000000;
+            background-color: #000000;
+        }
+
+        .option-card.selected .radio-circle::after {
+            content: '✓';
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .custom-date-container {
+            display: none;
+            margin-top: 4px;
+        }
+        .custom-date-input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .overview-card {
+            background-color: var(--card-bg);
+            border-radius: 18px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .overview-header {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--subtext);
+            letter-spacing: 0.5px;
+        }
+
+        .overview-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .overview-icon {
+            width: 36px;
+            height: 36px;
+            background-color: var(--input-bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .btn-continue {
+            width: 100%;
+            padding: 16px;
+            border-radius: 30px;
+            background-color: #ffffff;
+            color: #000000;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            margin-top: auto;
+        }
+
+        .btn-continue:hover { opacity: 0.9; }
+
+        .global-progress-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .global-progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--subtext);
+        }
+        .global-progress-info span b {
+            color: #ffffff;
+        }
+        .global-progress-track {
+            width: 100%;
+            height: 8px;
+            background-color: var(--input-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .global-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #1d4ed8, #38bdf8);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .week-card {
+            background-color: var(--card-bg);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .week-title { font-weight: 700; font-size: 16px; }
+        .week-badge { font-size: 12px; color: var(--subtext); }
+
+        .day-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .day-row:last-child { margin-bottom: 0; }
+
+        .day-col {
+            width: 55px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+
+        .day-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--subtext);
+            text-align: center;
+        }
+
+        .lessons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lesson-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .lesson-pill {
+            display: flex;
+            align-items: center;
+            border-radius: 14px;
+            padding: 12px 14px;
+            gap: 10px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+
+        .lesson-pill.completed {
+            opacity: 0.45;
+        }
+
+        .lesson-pill.completed .lesson-text {
+            text-decoration: line-through;
+        }
+
+        .color-blue { background-color: var(--pill-blue); }
+        .color-orange { background-color: var(--pill-orange); }
+        .color-red { background-color: var(--pill-red); }
+        .color-green { background-color: var(--pill-green); }
+        .color-purple { background-color: var(--pill-purple); }
+
+        .checkbox-pill {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .lesson-pill.completed .checkbox-pill {
+            background-color: #ffffff;
+            border-color: #ffffff;
+        }
+
+        .lesson-pill.completed .checkbox-pill::after {
+            content: '✓';
+            color: #000000;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .btn-note-toggle {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-note-toggle:hover {
+            color: #ffffff;
+        }
+
+        .lesson-pill.has-note .btn-note-toggle {
+            color: #38bdf8;
+            text-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+        }
+
+        .lesson-pill.has-note {
+            border: 1.5px solid rgba(56, 189, 248, 0.5);
+        }
+
+        .lesson-note-container {
+            display: none;
+            padding: 12px;
+            margin-bottom: 6px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .lesson-note-container.open {
+            display: block;
+        }
+
+        .lesson-note-editable {
+            width: 100%;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            min-height: 80px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .note-toolbar {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+            width: 100%;
+        }
+
+        .note-toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .note-toolbar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            min-width: 32px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tool-btn:hover {
+            background: var(--border-color);
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .color-picker-wrapper:hover {
+            background: var(--border-color);
+        }
+
+        .color-picker-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .color-picker-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .color-preview-circle, .bg-preview-circle {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.4);
+            pointer-events: none;
+        }
+
+        .bg-preview-circle {
+            background-color: #1d4ed8;
+        }
+
+        .modal-bg {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
 </head>
 <body>
 
-  <header class="sticky-header">
-    <div class="container">
-      <div class="header-top-row">
-        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Tracker Financiero</span>
-        <button class="theme-toggle-btn" onclick="toggleTheme()">
-          <span id="theme-icon">🌙</span> <span id="theme-text">Modo Oscuro</span>
-        </button>
-      </div>
-      <div class="header-grid-minimal">
-        <div class="stat-card-quarter">
-          <label for="quarter-select">Trimestre</label>
-          <select id="quarter-select" onchange="changeQuarter(this.value)">
-            <option value="Q1">Ene - Feb - Mar (Q1)</option>
-            <option value="Q2">Abr - May - Jun (Q2)</option>
-            <option value="Q3">Jul - Ago - Sep (Q3)</option>
-            <option value="Q4">Oct - Nov - Dic (Q4)</option>
-          </select>
+<div class="app-container">
+    <div class="top-nav">
+        <button class="btn-back" id="btn-back" onclick="goBack()">←</button>
+        <div class="progress-bar-container" id="pbar-box">
+            <div class="progress-bar" id="pbar"></div>
         </div>
+        <button class="btn-close" onclick="goToStep(1)">✕</button>
+    </div>
 
-        <div class="stat-card-income">
-          <label>INGRESO (€)</label>
-          <div class="income-row">
-            <input type="number" inputmode="decimal" step="any" class="income-input-editable" id="income-input-editable" onchange="updateIncomeDirectly(this.value)">
-            <div class="income-actions">
-              <button class="btn-undo" id="btn-undo" onclick="undoIncomeChange()" title="Deshacer cambio de ingreso" disabled>↩</button>
-              <button class="btn-add-income" onclick="openIncomeModal()">+</button>
+    <!-- PANTALLA 1: ONBOARDING -->
+    <div class="screen" id="step-1">
+        <div>
+            <h1 class="step-title">Set up your plan</h1>
+            <p class="step-subtitle">Choose when you want to start and which days you want to train for GratisRijbewijsOnline Theory B.</p>
+
+            <a href="https://www.gratisrijbewijsonline.be/theorie/leerstof-rijbewijs-b" target="_blank" rel="noopener noreferrer" class="hero-card">
+                <div class="hero-icon"></div>
+                <div class="hero-title">DRIVING THEORY B</div>
+                <span style="font-size: 11px; color: #38bdf8; margin-top: 6px;">🔗 Visit GratisRijbewijsOnline</span>
+            </a>
+
+            <p style="text-align: center; font-size: 13px; color: var(--subtext);">
+                Rijbewijs B · Gratis Rijbewijs Online<br>
+                <strong style="color: #fff;">Personalized plans based on your study days</strong>
+            </p>
+        </div>
+        <button class="btn-continue" onclick="goToStep(2)">Continue</button>
+    </div>
+
+    <!-- PANTALLA 2: FECHA INICIO -->
+    <div class="screen" id="step-2">
+        <div>
+            <h1 class="step-title">When do you want to start your plan?</h1>
+            <p class="step-subtitle">Pick a start date that works for you. You can change this anytime.</p>
+
+            <div class="options-list">
+                <div class="option-card" onclick="selectStartDate('Today', this)">
+                    <span class="main-label">Today</span>
+                    <div class="radio-circle"></div>
+                </div>
+                <div class="option-card" onclick="selectStartDate('Tomorrow', this)">
+                    <span class="main-label">Tomorrow</span>
+                    <div class="radio-circle"></div>
+                </div>
+                <div class="option-card selected" onclick="selectStartDate('Monday', this)" id="monday-option">
+                    <div class="option-info">
+                        <span class="main-label">Monday</span>
+                        <span class="sub-label" id="monday-date-str">Calculando...</span>
+                    </div>
+                    <div class="radio-circle"></div>
+                </div>
+                <div class="option-card" onclick="selectStartDate('Custom', this)">
+                    <span class="main-label">Custom</span>
+                    <div class="radio-circle"></div>
+                </div>
+                <div class="custom-date-container" id="custom-date-container">
+                    <input type="date" class="custom-date-input" id="custom-date-picker" onchange="onCustomDateChange(this.value)">
+                </div>
             </div>
-          </div>
         </div>
-      </div>
+        <button class="btn-continue" onclick="goToStep(3)">Continue</button>
     </div>
-  </header>
 
-  <main class="container">
-    <section class="global-summary-card">
-      <div style="border:none; padding:0; background:transparent;">
-        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">Capital Inicial (€)</span>
-        <input type="number" inputmode="decimal" step="any" id="initial-cap-input" style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;" onchange="updateInitialCap(this.value)">
-      </div>
-      <div style="border:none; padding:0; background:transparent;">
-        <span style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 2px; display: block;">SALDO TOTAL (€)</span>
-        <input type="number" inputmode="decimal" step="any" id="bank-balance-input" readonly style="width: 100%; background: transparent; border: none; color: var(--text-main); font-size: 1.05rem; font-weight: 700; outline: none;">
-      </div>
-      
-      <div class="global-summary-item full-width">
-        <span>Gasto Excedido (Límite Superado):</span>
-        <strong id="total-global-spent">0,00 €</strong>
-      </div>
+    <!-- PANTALLA 3: DÍAS DE ESTUDIO -->
+    <div class="screen" id="step-3">
+        <div>
+            <h1 class="step-title">Which days can you study?</h1>
+            <p class="step-subtitle">Choose days that usually work for you.</p>
 
-      <div class="accounts-section">
-        <div class="accounts-header">
-          <span>Cuentas BANCARIAS</span>
-          <div class="accounts-btn-group">
-            <button class="btn-transfer-account" onclick="openTransferModal()">🔄 Transferir</button>
-            <button class="btn-add-account" onclick="addAccount()">+ Añadir</button>
-          </div>
+            <div class="options-list" id="days-options-list">
+                <div class="option-card selected" onclick="toggleDay('Mon', this)"><span class="main-label">Monday</span><div class="radio-circle"></div></div>
+                <div class="option-card selected" onclick="toggleDay('Tue', this)"><span class="main-label">Tuesday</span><div class="radio-circle"></div></div>
+                <div class="option-card" onclick="toggleDay('Wed', this)"><span class="main-label">Wednesday</span><div class="radio-circle"></div></div>
+                <div class="option-card selected" onclick="toggleDay('Thu', this)"><span class="main-label">Thursday</span><div class="radio-circle"></div></div>
+                <div class="option-card selected" onclick="toggleDay('Fri', this)"><span class="main-label">Friday</span><div class="radio-circle"></div></div>
+                <div class="option-card" onclick="toggleDay('Sat', this)"><span class="main-label">Saturday</span><div class="radio-circle"></div></div>
+                <div class="option-card" onclick="toggleDay('Sun', this)"><span class="main-label">Sunday</span><div class="radio-circle"></div></div>
+            </div>
         </div>
-        <div class="accounts-grid" id="accounts-grid-container"></div>
-      </div>
-    </section>
-
-    <section class="percentage-bar-container">
-      <div class="percentage-header">
-        <span>Distribución Porcentual</span>
-        <span id="percentage-status-text" class="pct-status-badge">100% asignado</span>
-      </div>
-      <div class="progress-outer">
-        <div id="percentage-progress" class="progress-inner status-ok-bar" style="width: 100%;"></div>
-      </div>
-    </section>
-
-    <section id="categories-container" class="categories-grid"></section>
-
-    <section class="actions-bar">
-      <button class="btn-main" onclick="openAddCatModal()">+ Añadir Categoría</button>
-      
-      <div class="export-group">
-        <button class="btn-secondary" onclick="exportToCSV()">📊 Exportar CSV</button>
-        <button class="btn-secondary" onclick="exportToPDF()">📄 Abrir / Guardar PDF</button>
-      </div>
-
-      <button class="btn-danger-outline" onclick="resetCurrentQuarterData()">Restablecer Trimestre Actual</button>
-    </section>
-  </main>
-
-  <!-- MODAL TRANSFERENCIAS ENTRE CUENTAS -->
-  <div id="transfer-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h3>Transferencia entre Cuentas</h3>
-      
-      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Cuenta Origen (Sale dinero):</label>
-      <select id="transfer-from-select" class="modal-select"></select>
-
-      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Cuenta Destino (Entra dinero):</label>
-      <select id="transfer-to-select" class="modal-select"></select>
-
-      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Monto a transferir (€):</label>
-      <input type="number" inputmode="decimal" step="any" id="transfer-amount-input" class="modal-input" placeholder="0.00">
-
-      <div class="modal-buttons">
-        <button class="btn-modal-cancel" onclick="closeTransferModal()">Cancelar</button>
-        <button class="btn-modal-submit" onclick="submitTransfer()">Realizar Transferencia</button>
-      </div>
+        <button class="btn-continue" onclick="updateDurationOptions(); goToStep(4);">Continue</button>
     </div>
-  </div>
 
-  <!-- MODAL AGREGAR INGRESO CON SELECCIÓN DE CUENTA -->
-  <div id="income-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h3>Agregar al Ingreso (€)</h3>
-      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Monto a agregar (€):</label>
-      <input type="number" inputmode="decimal" step="any" id="income-add-input" class="modal-input" placeholder="0.00">
-      
-      <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">Cuenta Destino:</label>
-      <select id="income-account-select" class="modal-select"></select>
+    <!-- PANTALLA 4: DURACIÓN DEL PLAN -->
+    <div class="screen" id="step-4">
+        <div>
+            <h1 class="step-title">How long do you want to follow this plan?</h1>
+            <p class="step-subtitle">Recommended options based on your weekly study days.</p>
 
-      <div class="modal-buttons">
-        <button class="btn-modal-cancel" onclick="closeIncomeModal()">Cancelar</button>
-        <button class="btn-modal-submit" onclick="submitAddIncome()">Agregar</button>
-      </div>
+            <div class="options-list" id="duration-options-list">
+            </div>
+        </div>
+        <button class="btn-continue" onclick="goToStep(5)">Continue</button>
     </div>
-  </div>
 
-  <div id="add-cat-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h3>Selecciona el tipo de categoría</h3>
-      <button class="modal-option-btn" onclick="addCategory('normal')">📂 Categoría Normal (Gastos/Presupuesto)</button>
-      <button class="modal-option-btn" onclick="addCategory('income')">💵 Gastos Externos / Ganancias (Entrada de Dinero)</button>
-      <div class="modal-buttons" style="margin-top:10px;">
-        <button class="btn-modal-cancel" onclick="closeAddCatModal()">Cancelar</button>
-      </div>
+    <!-- PANTALLA 5: RESUMEN -->
+    <div class="screen" id="step-5">
+        <div>
+            <h1 class="step-title">Your plan is ready</h1>
+            <p class="step-subtitle">Check the details below. If everything looks right, you're ready to go.</p>
+
+            <a href="https://www.gratisrijbewijsonline.be/theorie/leerstof-rijbewijs-b" target="_blank" rel="noopener noreferrer" class="hero-card" style="padding: 24px; margin-bottom: 16px;">
+                <div class="hero-icon"></div>
+                <div class="hero-title" style="color: #fff;">Driving Theory B · GratisRijbewijsOnline</div>
+            </a>
+
+            <div class="overview-card">
+                <div class="overview-header">PLAN OVERVIEW</div>
+                <div class="overview-item">
+                    <div class="overview-icon">⏱</div>
+                    <div class="option-info">
+                        <span class="sub-label">Length</span>
+                        <span class="main-label" id="summary-length">4 weeks</span>
+                    </div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-icon">📅</div>
+                    <div class="option-info">
+                        <span class="sub-label">Start date</span>
+                        <span class="main-label" id="summary-start-date">-</span>
+                    </div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-icon">🏁</div>
+                    <div class="option-info">
+                        <span class="sub-label">End date</span>
+                        <span class="main-label" id="summary-end-date">-</span>
+                    </div>
+                </div>
+                <div class="overview-item">
+                    <div class="overview-icon">📋</div>
+                    <div class="option-info">
+                        <span class="sub-label">Training days</span>
+                        <span class="main-label" id="summary-days">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="btn-continue" onclick="saveAndRenderPlan()">Start planning</button>
     </div>
-  </div>
 
-  <div id="custom-cat-style-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h3>Personalizar Fondo del Cuadrante</h3>
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">Elige una foto o un color para este cuadrante:</p>
-      
-      <div style="margin-bottom:12px;">
-        <label style="font-size:0.8rem; display:block; margin-bottom:4px; font-weight:bold;">📱 Seleccionar foto de tu dispositivo:</label>
-        <input type="file" id="phone-photo-input" accept="image/*" style="width:100%; font-size:0.8rem; background:var(--input-bg); border:1px solid var(--card-border); padding:6px; border-radius:6px; color:var(--text-main);">
-      </div>
-
-      <div style="margin-bottom:12px;">
-        <label style="font-size:0.8rem; display:block; margin-bottom:4px; font-weight:bold;">🎨 O elige un color de fondo:</label>
-        <input type="color" id="cat-bg-color-picker" value="#1e293b" style="width:100%; height:40px; border:none; border-radius:6px; cursor:pointer;">
-      </div>
-
-      <button class="modal-option-btn" onclick="applyCustomStyleToTargetCat()">Aplicar Cambios</button>
-      <button class="modal-option-btn" onclick="resetCatStyleToDefault()" style="background:transparent; border-color:var(--danger); color:var(--danger);">Restablecer Fondo Predeterminado</button>
-      
-      <div class="modal-buttons" style="margin-top:10px;">
-        <button class="btn-modal-cancel" onclick="closeCustomCatModal()">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="paste-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h3>Pegar Gastos en Lote</h3>
-      <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">Pega tus líneas con formato como "- Nombre €00,00" o "+ Nombre €00,00":</p>
-      <textarea id="paste-textarea" class="modal-textarea" placeholder="- Flixbus €29,47&#10;- Rotterdam €59,21&#10;+ Reembolso €15,00"></textarea>
-      <div class="modal-buttons">
-        <button class="btn-modal-cancel" onclick="closePasteModal()">Cancelar</button>
-        <button class="btn-modal-submit" onclick="submitPasteMovements()">Añadir Gastos</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const QUARTER_ORDER = ["Q1", "Q2", "Q3", "Q4"];
-
-    function defaultAccounts() {
-      return [
-        { id: "acc-banco", name: "Banco", initialBalance: 0 },
-        { id: "acc-revolut", name: "Revolut", initialBalance: 0 },
-        { id: "acc-revolut-ahorros", name: "Revolut Ahorros", initialBalance: 0 },
-        { id: "acc-wise", name: "Wise", initialBalance: 0 },
-        { id: "acc-vinted", name: "Vinted", initialBalance: 0 },
-        { id: "acc-mintos", name: "Mintos", initialBalance: 0 }
-      ];
-    }
-
-    function createEmptyQuarter() {
-      const q = {
-        income: 0,
-        initialCapital: 0,
-        bankBalance: 0,
-        accounts: defaultAccounts(),
-        categories: [
-          { id: "cat-diezmo", name: "10% diezmo", percentage: 10, customNote: "", movements: [], type: "normal" },
-          { id: "cat-inversion", name: "10% inversión", percentage: 10, customNote: "", movements: [], type: "normal" },
-          { id: "cat-ahorros", name: "30% ahorros", percentage: 30, customNote: "", movements: [], type: "normal" },
-          { id: "cat-viajes", name: "20% viaje y salidas", percentage: 20, customNote: "", movements: [], type: "normal" },
-          { id: "cat-desarrollo", name: "15% desarrollo personal y salud", percentage: 15, customNote: "", movements: [], type: "normal" },
-          { id: "cat-whatever", name: "15% whatever", percentage: 15, customNote: "", movements: [], type: "normal" }
-        ]
-      };
-      // Al inicio, el capital inicial es igual al saldo total inicial de las cuentas principales
-      q.initialCapital = calculateAutoBankBalance(q);
-      return q;
-    }
-
-    let state = {
-      theme: "dark",
-      activeQuarter: "Q1",
-      quarters: {
-        Q1: createEmptyQuarter(),
-        Q2: createEmptyQuarter(),
-        Q3: createEmptyQuarter(),
-        Q4: createEmptyQuarter()
-      }
-    };
-
-    let sessionIncomeHistory = [];
-    let focusTargetCatId = null;
-    let targetPasteCatId = null;
-    let targetStyleCatId = null;
-    let sortableInstance = null;
-
-    function sanitizeFloat(val) {
-      if (!val) return 0;
-      const cleanVal = val.toString().replace(',', '.');
-      const parsed = parseFloat(cleanVal);
-      return isNaN(parsed) ? 0 : parsed;
-    }
-
-    function formatCurrency(amount) {
-      if (Math.abs(amount) < 0.005) return '0,00 €';
-      return new Intl.NumberFormat('de-DE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(amount) + ' €';
-    }
-
-    function formatPercentageText(num) {
-      if (num === null || num === undefined || isNaN(num)) return '0';
-      const cleanNum = Math.round(num * 100) / 100;
-      return (cleanNum % 1 === 0) ? cleanNum.toFixed(0) : cleanNum.toString().replace('.', ',');
-    }
-
-    function formatPercentageInput(num) {
-      if (num === null || num === undefined || isNaN(num)) return '0';
-      const cleanNum = Math.round(num * 100) / 100;
-      return (cleanNum % 1 === 0) ? cleanNum.toFixed(0) : cleanNum.toString();
-    }
-
-    function calculateAccountBalance(acc, qData) {
-      let accBalance = acc.initialBalance || 0;
-      const firstAccId = (qData.accounts && qData.accounts.length > 0) ? qData.accounts[0].id : null;
-
-      qData.categories.forEach(cat => {
-        cat.movements.forEach(m => {
-          const isTargetAccount = m.accountId === acc.id || (!m.accountId && acc.id === firstAccId);
-          if (isTargetAccount) {
-            if (m.type === '+') accBalance += m.amount;
-            if (m.type === '-') accBalance -= m.amount;
-          }
-        });
-      });
-      return accBalance;
-    }
-
-    // FILTRO ESTRICTO: Únicamente suma saldos de cuentas con nombre Banco, Revolut o Revolut Ahorros (Excluye Mintos)
-    function calculateAutoBankBalance(qData) {
-      let totalMainBalance = 0;
-      const allowedNames = ["banco", "revolut", "revolut ahorros", "revolut ahorro"];
-
-      qData.accounts.forEach(acc => {
-        const cleanName = (acc.name || "").trim().toLowerCase();
-        if (allowedNames.includes(cleanName)) {
-          totalMainBalance += calculateAccountBalance(acc, qData);
-        }
-      });
-      return totalMainBalance;
-    }
-
-    function syncFutureQuarters(changedQuarterKey) {
-      const startIdx = QUARTER_ORDER.indexOf(changedQuarterKey);
-      if (startIdx === -1) return;
-
-      for (let i = startIdx; i < QUARTER_ORDER.length - 1; i++) {
-        const currentKey = QUARTER_ORDER[i];
-        const nextKey = QUARTER_ORDER[i + 1];
-        
-        const currentData = state.quarters[currentKey];
-        const nextData = state.quarters[nextKey];
-
-        if (currentData && nextData) {
-          const finalBalance = calculateAutoBankBalance(currentData);
-          // Al sincronizar trimestres o meses nuevos, el capital inicial arranca igual al saldo total de inicio
-          nextData.initialCapital = parseFloat(finalBalance.toFixed(2));
-          nextData.bankBalance = calculateAutoBankBalance(nextData);
-        }
-      }
-    }
-
-    function migrateData(parsed) {
-      if (!parsed) return;
-      
-      const legacySaved = localStorage.getItem('quarterly_tracker_multi_q_v8');
-      const dataToUse = parsed.quarters ? parsed : (legacySaved ? JSON.parse(legacySaved) : null);
-
-      if (dataToUse && dataToUse.quarters) {
-        state = dataToUse;
-        QUARTER_ORDER.forEach(q => {
-          if (state.quarters[q]) {
-            if (!state.quarters[q].accounts) {
-              state.quarters[q].accounts = defaultAccounts();
-            }
-          }
-        });
-      }
-    }
-
-    function init() {
-      const saved = localStorage.getItem('quarterly_tracker_multi_q_v9');
-      if (saved) {
-        try { 
-          const parsed = JSON.parse(saved);
-          migrateData(parsed);
-        } catch (e) {}
-      } else {
-        const legacy = localStorage.getItem('quarterly_tracker_multi_q_v8');
-        if (legacy) {
-          try {
-            const parsedLegacy = JSON.parse(legacy);
-            migrateData(parsedLegacy);
-          } catch(e){}
-        }
-      }
-
-      if (!state.theme) state.theme = "dark";
-      if (!state.activeQuarter) state.activeQuarter = "Q1";
-      
-      applyTheme();
-      saveState();
-      render();
-    }
-
-    function getCurrentQuarterData() {
-      if (!state.quarters[state.activeQuarter]) {
-        state.quarters[state.activeQuarter] = createEmptyQuarter();
-      }
-      if (!state.quarters[state.activeQuarter].accounts) {
-        state.quarters[state.activeQuarter].accounts = defaultAccounts();
-      }
-      return state.quarters[state.activeQuarter];
-    }
-
-    function applyTheme() {
-      const metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (state.theme === "light") {
-        document.body.classList.add("light-theme");
-        document.getElementById("theme-icon").textContent = "☀";
-        document.getElementById("theme-text").textContent = "Modo Claro";
-        if (metaTheme) metaTheme.setAttribute('content', '#f1f5f9');
-      } else {
-        document.body.classList.remove("light-theme");
-        document.getElementById("theme-icon").textContent = "🌙";
-        document.getElementById("theme-text").textContent = "Modo Oscuro";
-        if (metaTheme) metaTheme.setAttribute('content', '#0f172a');
-      }
-    }
-
-    function toggleTheme() {
-      state.theme = state.theme === "light" ? "dark" : "light";
-      applyTheme();
-      saveState();
-    }
-
-    function saveState() {
-      localStorage.setItem('quarterly_tracker_multi_q_v9', JSON.stringify(state));
-      localStorage.setItem('quarterly_tracker_multi_q_v8', JSON.stringify(state));
-    }
-
-    function changeQuarter(val) {
-      state.activeQuarter = val;
-      sessionIncomeHistory = [];
-      saveState();
-      render();
-    }
-
-    function resetCurrentQuarterData() {
-      if (confirm(`¿Restablecer datos del trimestre ${state.activeQuarter}?`)) {
-        state.quarters[state.activeQuarter] = createEmptyQuarter();
-        sessionIncomeHistory = [];
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        render();
-      }
-    }
-
-    function pushIncomeToSessionHistory(val) {
-      sessionIncomeHistory.push(val);
-    }
-
-    function updateIncomeDirectly(val) {
-      const qData = getCurrentQuarterData();
-      const numVal = sanitizeFloat(val);
-      const newIncome = parseFloat(numVal.toFixed(2));
-      
-      if (qData.income !== newIncome) {
-        pushIncomeToSessionHistory(qData.income || 0);
-        qData.income = newIncome;
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        render();
-      }
-    }
-
-    function openIncomeModal() {
-      const qData = getCurrentQuarterData();
-      document.getElementById('income-add-input').value = '';
-      
-      const accSelect = document.getElementById('income-account-select');
-      accSelect.innerHTML = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-      
-      document.getElementById('income-modal').style.display = 'flex';
-      setTimeout(() => document.getElementById('income-add-input').focus(), 100);
-    }
-
-    function closeIncomeModal() {
-      document.getElementById('income-modal').style.display = 'none';
-    }
-
-    function submitAddIncome() {
-      const input = document.getElementById('income-add-input');
-      const targetAccountId = document.getElementById('income-account-select').value;
-      const addVal = sanitizeFloat(input.value);
-      
-      if (addVal > 0) {
-        const qData = getCurrentQuarterData();
-        const targetAcc = qData.accounts.find(a => a.id === targetAccountId);
-        const isMintos = targetAcc && targetAcc.name.trim().toLowerCase().includes('mintos');
-
-        // Si es Mintos, NO se agrega al ingreso repartible ni a las categorías, sólo a la cuenta individual de Mintos
-        if (!isMintos) {
-          pushIncomeToSessionHistory(qData.income || 0);
-          qData.income = (qData.income || 0) + addVal;
-
-          let incCat = qData.categories.find(c => c.type === 'income');
-          if (!incCat) {
-            incCat = {
-              id: 'cat-external-inc',
-              name: 'Ingresos / Ganancias',
-              percentage: 0,
-              customNote: '',
-              movements: [],
-              type: 'income'
-            };
-            qData.categories.push(incCat);
-          }
-
-          incCat.movements.push({
-            id: 'm-' + Date.now(),
-            type: '+',
-            amount: addVal,
-            desc: 'Ingreso rápido',
-            accountId: targetAccountId
-          });
-        } else {
-          // Si es Mintos, añade el movimiento solo a Mintos (sin categorizar/repartir)
-          let mintosCat = qData.categories.find(c => c.id === 'cat-mintos-direct');
-          if (!mintosCat) {
-            mintosCat = {
-              id: 'cat-mintos-direct',
-              name: '📈 Mintos (Ganancias Directas)',
-              percentage: 0,
-              customNote: 'Ganancias registradas exclusivamente en Mintos',
-              movements: [],
-              type: 'income'
-            };
-            qData.categories.push(mintosCat);
-          }
-
-          mintosCat.movements.push({
-            id: 'm-' + Date.now(),
-            type: '+',
-            amount: addVal,
-            desc: 'Ganancia Mintos',
-            accountId: targetAccountId
-          });
-        }
-
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        render();
-      }
-      closeIncomeModal();
-    }
-
-    function undoIncomeChange() {
-      if (sessionIncomeHistory.length > 0) {
-        const qData = getCurrentQuarterData();
-        qData.income = sessionIncomeHistory.pop();
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        render();
-      }
-    }
-
-    function updateInitialCap(val) { 
-      const qData = getCurrentQuarterData();
-      const numVal = sanitizeFloat(val);
-      qData.initialCapital = parseFloat(numVal.toFixed(2)); 
-      qData.bankBalance = calculateAutoBankBalance(qData);
-      syncFutureQuarters(state.activeQuarter);
-      saveState(); 
-      render();
-    }
-
-    function addAccount() {
-      const qData = getCurrentQuarterData();
-      const newAcc = {
-        id: 'acc-' + Date.now(),
-        name: 'Nueva Cuenta',
-        initialBalance: 0
-      };
-      qData.accounts.push(newAcc);
-      saveState();
-      render();
-    }
-
-    function deleteAccount(accId) {
-      const qData = getCurrentQuarterData();
-      if (qData.accounts.length <= 1) {
-        alert("Debes mantener al menos una cuenta.");
-        return;
-      }
-      if (confirm("¿Eliminar esta cuenta?")) {
-        qData.accounts = qData.accounts.filter(a => a.id !== accId);
-        saveState();
-        render();
-      }
-    }
-
-    function updateAccountName(accId, name) {
-      const qData = getCurrentQuarterData();
-      const acc = qData.accounts.find(a => a.id === accId);
-      if (acc) {
-        acc.name = name;
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        saveState();
-        render();
-      }
-    }
-
-    function updateAccountInitialBalance(accId, val) {
-      const qData = getCurrentQuarterData();
-      const acc = qData.accounts.find(a => a.id === accId);
-      if (acc) {
-        acc.initialBalance = sanitizeFloat(val);
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        saveState();
-        render();
-      }
-    }
-
-    function openTransferModal() {
-      const qData = getCurrentQuarterData();
-      if (!qData.accounts || qData.accounts.length < 2) {
-        alert("Necesitas tener al menos dos cuentas bancarias creadas para realizar una transferencia.");
-        return;
-      }
-
-      const fromSelect = document.getElementById('transfer-from-select');
-      const toSelect = document.getElementById('transfer-to-select');
-
-      fromSelect.innerHTML = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-      toSelect.innerHTML = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-
-      if (qData.accounts.length > 1) {
-        toSelect.selectedIndex = 1;
-      }
-
-      document.getElementById('transfer-amount-input').value = '';
-      document.getElementById('transfer-modal').style.display = 'flex';
-    }
-
-    function closeTransferModal() {
-      document.getElementById('transfer-modal').style.display = 'none';
-    }
-
-    function submitTransfer() {
-      const qData = getCurrentQuarterData();
-      const fromId = document.getElementById('transfer-from-select').value;
-      const toId = document.getElementById('transfer-to-select').value;
-      const amount = sanitizeFloat(document.getElementById('transfer-amount-input').value);
-
-      if (fromId === toId) {
-        alert("La cuenta de origen y destino deben ser diferentes.");
-        return;
-      }
-
-      if (amount <= 0) {
-        alert("Introduce un monto válido mayor a 0.");
-        return;
-      }
-
-      const fromAcc = qData.accounts.find(a => a.id === fromId);
-      const toAcc = qData.accounts.find(a => a.id === toId);
-
-      if (!fromAcc || !toAcc) return;
-
-      let transCat = qData.categories.find(c => c.id === 'cat-transfers' || c.name.toLowerCase().includes('transferencia'));
-      if (!transCat) {
-        transCat = {
-          id: 'cat-transfers',
-          name: '🔄 Transferencias entre cuentas',
-          percentage: 0,
-          customNote: 'Movimientos internos entre cuentas propias',
-          movements: [],
-          type: 'normal'
-        };
-        qData.categories.push(transCat);
-      }
-
-      const timestamp = Date.now();
-      transCat.movements.push({
-        id: 'm-' + timestamp + '-1',
-        type: '-',
-        amount: amount,
-        desc: `Transf. a ${toAcc.name}`,
-        accountId: fromAcc.id
-      });
-
-      transCat.movements.push({
-        id: 'm-' + timestamp + '-2',
-        type: '+',
-        amount: amount,
-        desc: `Transf. desde ${fromAcc.name}`,
-        accountId: toAcc.id
-      });
-
-      qData.bankBalance = calculateAutoBankBalance(qData);
-      syncFutureQuarters(state.activeQuarter);
-      saveState();
-      render();
-      closeTransferModal();
-    }
-
-    function openAddCatModal() {
-      document.getElementById('add-cat-modal').style.display = 'flex';
-    }
-
-    function closeAddCatModal() {
-      document.getElementById('add-cat-modal').style.display = 'none';
-    }
-
-    function openCustomCatModal(catId = null) {
-      closeAddCatModal();
-      targetStyleCatId = catId;
-      document.getElementById('phone-photo-input').value = '';
-      document.getElementById('custom-cat-style-modal').style.display = 'flex';
-    }
-
-    function closeCustomCatModal() {
-      document.getElementById('custom-cat-style-modal').style.display = 'none';
-      targetStyleCatId = null;
-    }
-
-    function applyCustomStyleToTargetCat() {
-      if (!targetStyleCatId) return;
-      const qData = getCurrentQuarterData();
-      const cat = qData.categories.find(c => c.id === targetStyleCatId);
-      if (!cat) return;
-
-      const fileInput = document.getElementById('phone-photo-input');
-      const selectedColor = document.getElementById('cat-bg-color-picker').value;
-
-      if (fileInput.files && fileInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          cat.bgStyle = 'custom-img';
-          cat.customImgData = e.target.result;
-          saveState();
-          render();
-          closeCustomCatModal();
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        cat.bgStyle = 'color';
-        cat.bgColor = selectedColor;
-        saveState();
-        render();
-        closeCustomCatModal();
-      }
-    }
-
-    function resetCatStyleToDefault() {
-      if (!targetStyleCatId) return;
-      const qData = getCurrentQuarterData();
-      const cat = qData.categories.find(c => c.id === targetStyleCatId);
-      if (cat) {
-        cat.bgStyle = '';
-        cat.bgColor = '';
-        cat.customImgData = '';
-        saveState();
-        render();
-      }
-      closeCustomCatModal();
-    }
-
-    function addCategory(type) {
-      closeAddCatModal();
-      const qData = getCurrentQuarterData();
-      const isIncome = type === 'income';
-
-      let newCat = {
-        id: 'cat-' + Date.now(),
-        name: isIncome ? 'Gastos Externos / Ganancias' : 'Nueva Categoría',
-        percentage: 0,
-        customNote: '',
-        movements: [],
-        type: type,
-        bgStyle: isIncome ? 'image' : '',
-        bgColor: '',
-        customImgData: ''
-      };
-
-      qData.categories.push(newCat);
-      saveState();
-      render();
-    }
-
-    function duplicateCategory(catId) {
-      const qData = getCurrentQuarterData();
-      const originalCat = qData.categories.find(c => c.id === catId);
-      if (originalCat) {
-        const duplicatedCat = JSON.parse(JSON.stringify(originalCat));
-        duplicatedCat.id = 'cat-' + Date.now();
-        duplicatedCat.name = `${originalCat.name} (Copia)`;
-        qData.categories.push(duplicatedCat);
-        saveState();
-        render();
-      }
-    }
-
-    function handleCardClick(event, catId) {
-      const interactiveElements = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'OPTION'];
-      if (interactiveElements.includes(event.target.tagName) || event.target.closest('.drag-handle')) {
-        return;
-      }
-      openCustomCatModal(catId);
-    }
-
-    function initSortable() {
-      const container = document.getElementById('categories-container');
-      if (!container) return;
-
-      if (sortableInstance) {
-        sortableInstance.destroy();
-      }
-
-      sortableInstance = new Sortable(container, {
-        animation: 150,
-        handle: '.drag-handle',
-        ghostClass: 'sortable-ghost',
-        dragClass: 'sortable-drag',
-        onEnd: function (evt) {
-          const qData = getCurrentQuarterData();
-          const movedItem = qData.categories.splice(evt.oldIndex, 1)[0];
-          qData.categories.splice(evt.newIndex, 0, movedItem);
-          saveState();
-        }
-      });
-    }
-
-    function updateCatPercentage(catId, val) {
-      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
-      if (cat) { cat.percentage = sanitizeFloat(val); saveState(); render(); }
-    }
-
-    function updateCatName(catId, val) {
-      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
-      if (cat) { cat.name = val; saveState(); }
-    }
-
-    function updateCatNote(catId, val) {
-      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
-      if (cat) { cat.customNote = val; saveState(); }
-    }
-
-    function deleteCategory(catId) {
-      if (confirm('¿Eliminar esta categoría?')) {
-        const qData = getCurrentQuarterData();
-        qData.categories = qData.categories.filter(c => c.id !== catId);
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        render();
-      }
-    }
-
-    function copyCatMovements(catId) {
-      const cat = getCurrentQuarterData().categories.find(c => c.id === catId);
-      if (!cat || cat.movements.length === 0) {
-        alert('No hay movimientos cargados en esta categoría para copiar.');
-        return;
-      }
-
-      const textLines = cat.movements.map(m => `${m.type} ${m.desc} €${m.amount.toFixed(2)}`).join('\n');
-      navigator.clipboard.writeText(textLines).then(() => {
-        alert(`¡Copiado con signos al portapapeles! (${cat.movements.length} movimientos)`);
-      }).catch(() => {
-        alert(textLines);
-      });
-    }
-
-    function openPasteModal(catId) {
-      targetPasteCatId = catId;
-      document.getElementById('paste-textarea').value = '';
-      document.getElementById('paste-modal').style.display = 'flex';
-      setTimeout(() => document.getElementById('paste-textarea').focus(), 100);
-    }
-
-    function closePasteModal() {
-      document.getElementById('paste-modal').style.display = 'none';
-      targetPasteCatId = null;
-    }
-
-    function submitPasteMovements() {
-      if (!targetPasteCatId) return;
-      const text = document.getElementById('paste-textarea').value;
-      if (!text.trim()) { closePasteModal(); return; }
-
-      const lines = text.split('\n');
-      const qData = getCurrentQuarterData();
-      const cat = qData.categories.find(c => c.id === targetPasteCatId);
-      const defaultAccId = (qData.accounts && qData.accounts.length > 0) ? qData.accounts[0].id : '';
-
-      if (cat) {
-        let addedCount = 0;
-        lines.forEach(line => {
-          let trimmed = line.trim();
-          if (!trimmed) return;
-
-          let movType = '-';
-          if (trimmed.startsWith('+')) {
-            movType = '+';
-            trimmed = trimmed.substring(1).trim();
-          } else if (trimmed.startsWith('-')) {
-            movType = '-';
-            trimmed = trimmed.substring(1).trim();
-          }
-
-          const match = trimmed.match(/^(.*?)(?:[€$]\s*\vert{}\s+)(\d+(?:[.,]\d+)?)$/i) || trimmed.match(/^(.*?)\s+(\d+(?:[.,]\d+)?)\s*[€$]?$/i);
-          if (match) {
-            const desc = match[1].trim() || 'Gasto importado';
-            const rawAmt = match[2].replace(',', '.');
-            const amount = parseFloat(rawAmt);
-
-            if (!isNaN(amount) && amount > 0) {
-              cat.movements.push({
-                id: 'm-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-                type: movType,
-                amount: amount,
-                desc: desc,
-                accountId: defaultAccId
-              });
-              addedCount++;
-            }
-          }
-        });
-
-        if (addedCount > 0) {
-          qData.bankBalance = calculateAutoBankBalance(qData);
-          syncFutureQuarters(state.activeQuarter);
-          saveState();
-          render();
-        }
-      }
-      closePasteModal();
-    }
-
-    function addMovement(catId, event) {
-      event.preventDefault();
-      const form = event.target;
-      const type = form.type.value;
-      const desc = form.desc.value.trim();
-      const amount = sanitizeFloat(form.amount.value);
-      const accountId = form.account ? form.account.value : '';
-      if (!desc || amount <= 0) return;
-
-      const qData = getCurrentQuarterData();
-      const cat = qData.categories.find(c => c.id === catId);
-      if (cat) {
-        cat.movements.push({ id: 'm-' + Date.now(), type, amount, desc, accountId });
-
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        focusTargetCatId = catId;
-        render();
-      }
-    }
-
-    function updateMovement(catId, movId, field, value) {
-      const qData = getCurrentQuarterData();
-      const cat = qData.categories.find(c => c.id === catId);
-      if (cat) {
-        const mov = cat.movements.find(m => m.id === movId);
-        if (mov) {
-          if (field === 'type') mov.type = value;
-          else if (field === 'desc') mov.desc = value;
-          else if (field === 'amount') mov.amount = sanitizeFloat(value);
-          else if (field === 'accountId') mov.accountId = value;
-
-          qData.bankBalance = calculateAutoBankBalance(qData);
-          syncFutureQuarters(state.activeQuarter);
-          saveState();
-          render();
-        }
-      }
-    }
-
-    function deleteMovement(catId, movId) {
-      const qData = getCurrentQuarterData();
-      const cat = qData.categories.find(c => c.id === catId);
-      if (cat) {
-        cat.movements = cat.movements.filter(m => m.id !== movId);
-        qData.bankBalance = calculateAutoBankBalance(qData);
-        syncFutureQuarters(state.activeQuarter);
-        saveState();
-        render();
-      }
-    }
-
-    function renderAccounts() {
-      const qData = getCurrentQuarterData();
-      const container = document.getElementById('accounts-grid-container');
-      container.innerHTML = '';
-
-      qData.accounts.forEach(acc => {
-        let accBalance = calculateAccountBalance(acc, qData);
-
-        const accCard = document.createElement('div');
-        accCard.className = 'account-card-item';
-        accCard.innerHTML = `
-          <div class="account-card-header">
-            <input type="text" class="account-name-input" value="${escapeHtml(acc.name)}" onchange="updateAccountName('${acc.id}', this.value)">
-            <button class="btn-del-account" onclick="deleteAccount('${acc.id}')">&times;</button>
-          </div>
-          <span style="font-size:0.6rem; color:var(--text-muted); font-weight:bold; text-transform:uppercase; margin-top:2px;">Saldo Actual</span>
-          <div style="font-size:0.95rem; font-weight:800; color:${accBalance < 0 ? 'var(--danger)' : 'var(--success)'};">
-            ${formatCurrency(accBalance)}
-          </div>
-          <div style="display:flex; align-items:center; gap:2px; margin-top:2px; border-top: 1px dashed var(--card-border); padding-top:2px;">
-            <span style="font-size:0.58rem; color:var(--text-muted);">Base:</span>
-            <input type="number" inputmode="decimal" step="any" class="account-balance-input" style="font-size:0.7rem; color:var(--text-main);" value="${acc.initialBalance || 0}" onchange="updateAccountInitialBalance('${acc.id}', this.value)">
-          </div>
-        `;
-        container.appendChild(accCard);
-      });
-    }
-
-    function render() {
-      const qData = getCurrentQuarterData();
-      qData.bankBalance = calculateAutoBankBalance(qData);
-
-      document.getElementById('quarter-select').value = state.activeQuarter;
-      document.getElementById('income-input-editable').value = (qData.income || 0).toFixed(2);
-      
-      const undoBtn = document.getElementById('btn-undo');
-      undoBtn.disabled = sessionIncomeHistory.length === 0;
-
-      document.getElementById('initial-cap-input').value = (qData.initialCapital || 0).toFixed(2);
-      document.getElementById('bank-balance-input').value = (qData.bankBalance || 0).toFixed(2);
-
-      renderAccounts();
-
-      let overspentTotal = 0;
-      qData.categories.forEach(cat => {
-        const isIncomeCat = cat.type === 'income';
-        const plusMovements = cat.movements.filter(m => m.type === '+');
-        const minusMovements = cat.movements.filter(m => m.type === '-');
-        
-        const totalPlus = plusMovements.reduce((acc, m) => acc + m.amount, 0);
-        const totalSpentCat = minusMovements.reduce((acc, m) => acc + m.amount, 0);
-
-        let allocatedEUR = isIncomeCat ? totalPlus : (qData.income * (cat.percentage / 100));
-        let totalCatCalculated = allocatedEUR + (isIncomeCat ? 0 : totalPlus);
-        let remainingEUR = totalCatCalculated - totalSpentCat;
-
-        if (remainingEUR < 0) {
-          overspentTotal += Math.abs(remainingEUR);
-        }
-      });
-      
-      document.getElementById('total-global-spent').textContent = formatCurrency(overspentTotal);
-
-      // Excluir categoría Mintos directas o ingresos especiales que no entran en reparto
-      const totalPct = qData.categories
-        .filter(c => c.type !== 'income' && c.id !== 'cat-mintos-direct')
-        .reduce((acc, c) => acc + (c.percentage || 0), 0);
-
-      const pctStatusText = document.getElementById('percentage-status-text');
-      const pctProgressBar = document.getElementById('percentage-progress');
-
-      pctProgressBar.style.width = Math.min(totalPct, 100) + '%';
-
-      if (totalPct === 100) {
-        pctStatusText.textContent = '100% Asignado';
-        pctStatusText.className = 'pct-status-badge status-ok';
-        pctProgressBar.className = 'progress-inner status-ok-bar';
-      } else if (totalPct < 100) {
-        pctStatusText.textContent = `${formatPercentageText(totalPct)}% Asignado (Falta ${formatPercentageText(100 - totalPct)}%)`;
-        pctStatusText.className = 'pct-status-badge status-warning';
-        pctProgressBar.className = 'progress-inner status-warning-bar';
-      } else {
-        pctStatusText.textContent = `${formatPercentageText(totalPct)}% Asignado (Excedido en ${formatPercentageText(totalPct - 100)}%)`;
-        pctStatusText.className = 'pct-status-badge status-danger';
-        pctProgressBar.className = 'progress-inner status-danger-bar';
-      }
-
-      const container = document.getElementById('categories-container');
-      container.innerHTML = '';
-
-      qData.categories.forEach(cat => {
-        const isIncomeCat = cat.type === 'income';
-        const plusMovements = cat.movements.filter(m => m.type === '+');
-        const minusMovements = cat.movements.filter(m => m.type === '-');
-        const sortedMovements = [...plusMovements, ...minusMovements];
-
-        const totalPlus = plusMovements.reduce((acc, m) => acc + m.amount, 0);
-        const totalSpentCat = minusMovements.reduce((acc, m) => acc + m.amount, 0);
-
-        let allocatedEUR = 0;
-        let displayedPct = 0;
-
-        if (isIncomeCat) {
-          allocatedEUR = totalPlus;
-          displayedPct = (qData.income > 0) ? ((totalPlus / qData.income) * 100) : 0;
-        } else {
-          allocatedEUR = (qData.income * (cat.percentage / 100));
-          displayedPct = cat.percentage || 0;
-        }
-
-        const totalCatCalculated = allocatedEUR + (isIncomeCat ? 0 : totalPlus);
-        const remainingEUR = totalCatCalculated - totalSpentCat;
-
-        let remainingColor = 'var(--success)';
-        if (Math.abs(remainingEUR) < 0.005) {
-          remainingColor = 'var(--orange-brand)';
-        } else if (remainingEUR < 0) {
-          remainingColor = 'var(--danger)';
-        }
-
-        const card = document.createElement('article');
-        let cardClasses = 'category-card';
-        if (isIncomeCat) {
-          cardClasses += ' income-type';
-          if (cat.bgStyle === 'image') cardClasses += ' bg-money';
-        }
-        card.className = cardClasses;
-        card.setAttribute('data-id', cat.id);
-        card.setAttribute('onclick', `handleCardClick(event, '${cat.id}')`);
-
-        if (cat.bgStyle === 'color' && cat.bgColor) {
-          card.style.backgroundColor = cat.bgColor;
-        } else if (cat.bgStyle === 'custom-img' && cat.customImgData) {
-          card.style.backgroundImage = `linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), url(${cat.customImgData})`;
-        }
-
-        const accountsOptions = qData.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
-
-        card.innerHTML = `
-          <div class="cat-header">
-            <span class="drag-handle" title="Arrastrar para reordenar">☰</span>
-            <input type="text" class="cat-title-input" value="${escapeHtml(cat.name)}" onchange="updateCatName('${cat.id}', this.value)">
+    <!-- PANTALLA 6: PLANIFICADOR (Con margen inferior extra para Samsung) -->
+    <div class="screen" id="step-6">
+        <div>
+            <h1 class="step-title">Driving Theory B</h1>
+            <p class="step-subtitle" style="margin-bottom: 6px;">Tap lessons to mark as complete.</p>
             
-            <div class="pct-input-group">
-              <input type="number" inputmode="decimal" step="any" value="${formatPercentageInput(displayedPct)}" ${isIncomeCat ? 'readonly style="opacity:0.8;"' : `onchange="updateCatPercentage('${cat.id}', this.value)"`}>
-              <span>%</span>
+            <a href="https://www.gratisrijbewijsonline.be/theorie/leerstof-rijbewijs-b" target="_blank" rel="noopener noreferrer" class="external-link">🔗 Visit GratisRijbewijsOnline</a>
+
+            <div class="global-progress-card">
+                <div class="global-progress-info">
+                    <span>Progreso Total</span>
+                    <span id="global-progress-text"><b>0%</b> (0/33)</span>
+                </div>
+                <div class="global-progress-track">
+                    <div class="global-progress-fill" id="global-progress-fill"></div>
+                </div>
             </div>
-            <button class="btn-duplicate-cat" onclick="duplicateCategory('${cat.id}')" title="Duplicar Categoría">📋</button>
-            <button class="btn-delete-cat" onclick="deleteCategory('${cat.id}')" title="Eliminar Categoría">&times;</button>
-          </div>
 
-          <div class="cat-summary">
-            <div>
-              <span>${isIncomeCat ? 'Entradas (+)' : 'Asignado'}</span>
-              <strong>${formatCurrency(allocatedEUR)}</strong>
-              ${(!isIncomeCat && plusMovements.length > 0) ? `<span class="total-highlight">TOTAL: ${formatCurrency(totalCatCalculated)}</span>` : ''}
-            </div>
-            <div>
-              <span>Gastado</span>
-              <strong style="color: var(--text-main)">${formatCurrency(totalSpentCat)}</strong>
-            </div>
-            <div>
-              <span>Restante</span>
-              <strong style="color: ${remainingColor}">
-                ${formatCurrency(remainingEUR)}
-              </strong>
-            </div>
-            <div class="summary-actions-cell">
-              <button class="btn-action-icon" onclick="copyCatMovements('${cat.id}')" title="Copiar gastos de esta categoría">📄</button>
-              <button class="btn-action-icon" onclick="openPasteModal('${cat.id}')" title="Pegar gastos en lote">📋</button>
-            </div>
-          </div>
+            <div id="results-container"></div>
+        </div>
+        <!-- Contenedor con margen extra abajo para evitar conflicto con la barra/gestos de Samsung -->
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 30px; margin-bottom: 40px;">
+            <button class="btn-continue" onclick="markAllCompleted()">Mark all as completed</button>
+            <button class="btn-continue" onclick="openEditModal()" style="background-color: var(--input-bg); color: #fff;">Edit Plan Settings</button>
+        </div>
+    </div>
 
-          <div class="extra-notes">
-            <label>Anotaciones / Detalles:</label>
-            <textarea placeholder="Escribe detalles aquí..." onchange="updateCatNote('${cat.id}', this.value)">${escapeHtml(cat.customNote || '')}</textarea>
-          </div>
+    <!-- PANTALLA 7: FELICITACIONES -->
+    <div class="screen" id="step-7">
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+            <div style="font-size: 64px; margin-bottom: 20px;">🚗💨</div>
+            <h1 style="font-size: 28px; font-weight: 800; text-align: center; margin-bottom: 12px;">¡Teoría terminada!</h1>
+            <p style="color: var(--subtext); font-size: 15px; text-align: center; line-height: 1.5; max-width: 320px; margin: 0 0 30px 0;">
+                Has completado todo el contenido de Driving Theory B. ¡Estás listo para dar el siguiente paso hacia tu licencia!
+            </p>
+            <a href="https://www.gratisrijbewijsonline.be/theorie/proefexamen-rijbewijs-b" target="_blank" rel="noopener noreferrer" style="width: 100%; max-width: 320px; padding: 16px; border-radius: 30px; background-color: #38bdf8; color: #000000; font-size: 16px; font-weight: 700; text-align: center; text-decoration: none; box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4); margin-bottom: 12px;">
+                Hacer examen de prueba 🔗
+            </a>
+        </div>
+        <button class="btn-continue" onclick="resetPlan()" style="background-color: var(--input-bg); color: #fff; margin-top: 10px; margin-bottom: 30px;">Reiniciar plan</button>
+    </div>
+</div>
 
-          <div class="movements-section">
-            <ul class="movement-list">
-              ${sortedMovements.length === 0 ? '<li style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 6px 0;">Sin movimientos</li>' : ''}
-              ${sortedMovements.map(m => `
-                <li class="movement-item ${m.type === '+' ? 'plus' : 'minus'}">
-                  <select class="mov-type-select" onchange="updateMovement('${cat.id}', '${m.id}', 'type', this.value)">
-                    <option value="-" ${m.type === '-' ? 'selected' : ''}>-</option>
-                    <option value="+" ${m.type === '+' ? 'selected' : ''}>+</option>
-                  </select>
-                  <select class="mov-account-select" onchange="updateMovement('${cat.id}', '${m.id}', 'accountId', this.value)">
-                    <option value="" ${!m.accountId ? 'selected' : ''}>Gral</option>
-                    ${qData.accounts.map(a => `<option value="${a.id}" ${m.accountId === a.id ? 'selected' : ''}>${escapeHtml(a.name)}</option>`).join('')}
-                  </select>
-                  <input type="text" class="mov-desc-input" value="${escapeHtml(m.desc)}" onchange="updateMovement('${cat.id}', '${m.id}', 'desc', this.value)">
-                  <input type="number" inputmode="decimal" step="any" class="mov-amount-input" value="${m.amount}" onchange="updateMovement('${cat.id}', '${m.id}', 'amount', this.value)">
-                  <span style="font-size:0.75rem; color:var(--text-muted);">€</span>
-                  <button class="btn-icon" onclick="deleteMovement('${cat.id}', '${m.id}')">&times;</button>
-                </li>
-              `).join('')}
-            </ul>
+<!-- MODAL PARA AJUSTAR DURACIÓN -->
+<div class="modal-bg" id="edit-modal">
+    <div class="modal-card">
+        <h2 style="margin-top: 0; font-size: 18px;">Adjust Plan Duration</h2>
+        <p style="color: var(--subtext); font-size: 13px;">Add more weeks to spread out your study load.</p>
 
-            <form class="mov-form" id="form-mov-${cat.id}" onsubmit="addMovement('${cat.id}', event)">
-              <select name="type">
-                <option value="-">&minus;</option>
-                <option value="+">+</option>
-              </select>
-              <select name="account">
-                ${accountsOptions}
-              </select>
-              <input type="text" name="desc" placeholder="Descripción del gasto..." required>
-              <input type="number" inputmode="decimal" step="any" name="amount" placeholder="€" required>
-              <button type="submit" class="btn-add">+</button>
-            </form>
-          </div>
-        `;
+        <div class="options-list">
+            <div class="option-card" onclick="setExtraWeeks(1, this)"><span class="main-label">+1 Week</span><div class="radio-circle"></div></div>
+            <div class="option-card" onclick="setExtraWeeks(2, this)"><span class="main-label">+2 Weeks</span><div class="radio-circle"></div></div>
+            <div class="option-card selected" onclick="setExtraWeeks(3, this)"><span class="main-label">+3 Weeks</span><div class="radio-circle"></div></div>
+        </div>
 
-        container.appendChild(card);
-      });
+        <button class="btn-continue" onclick="applyPlanAdjustment()">Apply & Recalculate</button>
+    </div>
+</div>
 
-      initSortable();
+<script>
+    let currentStep = 1;
+    let selectedWeeks = 4;
+    let startDateObj = new Date();
+    let selectedStartDateText = '';
+    let selectedDays = ['Mon', 'Tue', 'Thu', 'Fri'];
+    let completedLessons = {};
+    let lessonNotes = {};
+    let tempWeeksToAdd = 3;
 
-      if (focusTargetCatId) {
-        const inputDesc = document.querySelector(`#form-mov-${focusTargetCatId} input[name="desc"]`);
-        if (inputDesc) {
-          setTimeout(() => inputDesc.focus(), 50);
-        }
-        focusTargetCatId = null;
-      }
+    const colorPalette = ['color-blue', 'color-orange', 'color-red', 'color-green', 'color-purple'];
+
+    const lessonsData = [
+        { id: 1, name: "1. De openbare weg en de rijbaan" },
+        { id: 2, name: "2. De rijstroken, busstrook" },
+        { id: 3, name: "3. Het fietspad en fietsers" },
+        { id: 4, name: "4. De autoweg" },
+        { id: 5, name: "5. De autosnelweg" },
+        { id: 6, name: "6. Speciale plaatsen" },
+        { id: 7, name: "7. De voetgangers" },
+        { id: 8, name: "8. De bestuurders & voertuigen" },
+        { id: 9, name: "9. De personenauto (MTM & MBT)" },
+        { id: 10, name: "10. Lading en zitplaatsen" },
+        { id: 11, name: "11. De lichten en de claxon" },
+        { id: 12, name: "12. Snelheidsbeperkingen" },
+        { id: 13, name: "13. Stopafstand en reactietijd" },
+        { id: 14, name: "14. Kruisen op de weg" },
+        { id: 15, name: "15 & 16. Inhalen (Deel 1 & 2)" },
+        { id: 16, name: "17. Bevoegde personen & bevelen" },
+        { id: 17, name: "18. Verkeerslichten" },
+        { id: 18, name: "19. Verkeersborden en voorrang" },
+        { id: 19, name: "20. Voorrang van rechts" },
+        { id: 20, name: "21. Afslaan op een kruispunt" },
+        { id: 21, name: "22. Trein, tram en bus" },
+        { id: 22, name: "23. Verboden rijrichting" },
+        { id: 23, name: "24. Verplichte rijrichting" },
+        { id: 24, name: "25. Parkeren y stilstaan (Deel 1)" },
+        { id: 25, name: "26. Parkeren y stilstaan (Deel 2)" },
+        { id: 26, name: "27. Parkeren y stilstaan (Deel 3)" },
+        { id: 27, name: "28. Alcohol, drugs & medicijnen" },
+        { id: 28, name: "29. Ongeval & EHBO" },
+        { id: 29, name: "30. Milieu & ecologisch rijden" },
+        { id: 30, name: "31. Techniek & onderhoud van de auto" },
+        { id: 31, name: "32. Defensief rijden" },
+        { id: 32, name: "33. Verkeersbordoverzicht (Borden)" },
+        { id: 33, name: "34. Snelheid en reactie" }
+    ];
+
+    function initDates() {
+        const today = new Date();
+        const nextMonday = new Date(today);
+        nextMonday.setDate(today.getDate() + ((1 + 7 - today.getDay()) % 7 || 7));
+        
+        startDateObj = nextMonday;
+        const options = { month: 'short', day: 'numeric', year: 'numeric' };
+        const dateStr = nextMonday.toLocaleDateString('en-US', options);
+        
+        document.getElementById('monday-date-str').innerText = dateStr;
+        selectedStartDateText = "Mon, " + dateStr;
     }
 
-    function exportToCSV() {
-      const qData = getCurrentQuarterData();
-      let csv = "Trimestre,Tipo,Categoria,Cuenta,Descripcion,Monto (EUR)\n";
+    function formatDate(d) {
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
 
-      qData.categories.forEach(cat => {
-        if (cat.movements.length === 0) {
-          csv += `"${state.activeQuarter}","N/A","${cat.name}","N/A","Sin movimientos","0"\n`;
+    function formatShortDate(d) {
+        return `${d.getDate()}/${d.getMonth() + 1}`;
+    }
+
+    function goToStep(stepNumber) {
+        currentStep = stepNumber;
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step-${stepNumber}`).classList.add('active');
+        
+        document.getElementById('btn-back').style.visibility = (stepNumber > 1 && stepNumber < 7) ? 'visible' : 'hidden';
+
+        const pbar = document.getElementById('pbar');
+        const pbarBox = document.getElementById('pbar-box');
+        if (stepNumber <= 5) {
+            pbarBox.style.display = 'block';
+            pbar.style.width = (stepNumber * 20) + '%';
         } else {
-          cat.movements.forEach(m => {
-            const accObj = qData.accounts.find(a => a.id === m.accountId);
-            const accName = accObj ? accObj.name : 'General';
-            csv += `"${state.activeQuarter}","${m.type}","${cat.name}","${accName}","${m.desc}",${m.amount}\n`;
-          });
+            pbarBox.style.display = 'none';
         }
-      });
 
-      const blob = new Blob([csv], { type: "text/plain;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+        if (stepNumber === 5) {
+            document.getElementById('summary-length').innerText = selectedWeeks + ' weeks';
+            document.getElementById('summary-start-date').innerText = selectedStartDateText;
+            
+            const endDate = new Date(startDateObj);
+            endDate.setDate(endDate.getDate() + (selectedWeeks * 7) - 1);
+            document.getElementById('summary-end-date').innerText = formatDate(endDate);
+            document.getElementById('summary-days').innerText = selectedDays.join(', ');
+        }
     }
 
-    function exportToPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const qData = getCurrentQuarterData();
+    function goBack() { if (currentStep > 1) goToStep(currentStep - 1); }
 
-      doc.setFontSize(16);
-      doc.text(`Tracker Financiero - Trimestre ${state.activeQuarter}`, 14, 15);
-      
-      doc.setFontSize(10);
-      doc.text(`Ingresos: ${formatCurrency(qData.income)}  |  Capital Inicial: ${formatCurrency(qData.initialCapital)}  |  Saldo Total: ${formatCurrency(qData.bankBalance)}`, 14, 23);
+    function selectStartDate(type, el) {
+        const today = new Date();
+        const customContainer = document.getElementById('custom-date-container');
 
-      const tableRows = [];
-      qData.categories.forEach(cat => {
-        const isIncome = cat.type === 'income';
-        const plus = cat.movements.filter(m => m.type === '+').reduce((acc, m) => acc + m.amount, 0);
-        const minus = cat.movements.filter(m => m.type === '-').reduce((acc, m) => acc + m.amount, 0);
+        if (type === 'Today') {
+            startDateObj = today;
+            customContainer.style.display = 'none';
+        } else if (type === 'Tomorrow') {
+            startDateObj = new Date(today);
+            startDateObj.setDate(today.getDate() + 1);
+            customContainer.style.display = 'none';
+        } else if (type === 'Monday') {
+            initDates();
+            customContainer.style.display = 'none';
+        } else if (type === 'Custom') {
+            customContainer.style.display = 'block';
+            const picker = document.getElementById('custom-date-picker');
+            if (picker.value) onCustomDateChange(picker.value);
+        }
 
-        let allocated = isIncome ? plus : (qData.income * (cat.percentage / 100));
-        let pctLabel = isIncome ? `${formatPercentageText(qData.income > 0 ? (plus/qData.income*100) : 0)}%` : `${formatPercentageText(cat.percentage)}%`;
-        let remaining = allocated + (isIncome ? 0 : plus) - minus;
+        if (type !== 'Custom') {
+            selectedStartDateText = formatDate(startDateObj);
+        }
 
-        tableRows.push([
-          cat.name,
-          pctLabel,
-          formatCurrency(allocated),
-          formatCurrency(minus),
-          formatCurrency(remaining)
-        ]);
-      });
+        document.querySelectorAll('#step-2 .option-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+    }
 
-      if (typeof doc.autoTable === 'function') {
-        doc.autoTable({
-          startY: 30,
-          head: [['Categoría', '%', 'Asignado/Entrada', 'Gastado', 'Restante']],
-          body: tableRows,
-          theme: 'striped',
-          headStyles: { fillStyle: [59, 130, 246] }
+    function onCustomDateChange(val) {
+        if (!val) return;
+        const [year, month, day] = val.split('-');
+        startDateObj = new Date(year, month - 1, day);
+        selectedStartDateText = formatDate(startDateObj);
+    }
+
+    function toggleDay(day, el) {
+        if (selectedDays.includes(day)) {
+            if (selectedDays.length === 1) return;
+            selectedDays = selectedDays.filter(d => d !== day);
+            el.classList.remove('selected');
+        } else {
+            selectedDays.push(day);
+            el.classList.add('selected');
+        }
+    }
+
+    function updateDurationOptions() {
+        const numDays = selectedDays.length;
+        const totalLessons = lessonsData.length;
+        
+        let baseIdealWeeks = Math.ceil(totalLessons / (numDays * 1.5));
+        if (baseIdealWeeks < 2) baseIdealWeeks = 2;
+
+        let wIntense = Math.max(2, Math.floor(baseIdealWeeks * 0.6));
+        let wFast = Math.max(wIntense + 1, Math.floor(baseIdealWeeks * 0.8));
+        let wRec = baseIdealWeeks;
+        let wSteady = baseIdealWeeks + Math.max(2, Math.round(baseIdealWeeks * 0.4));
+        let wRelaxed = baseIdealWeeks + Math.max(4, Math.round(baseIdealWeeks * 0.8));
+
+        let options = [
+            { weeks: wIntense, desc: "Intensive course" },
+            { weeks: wFast, desc: "Fast track" },
+            { weeks: wRec, desc: "Recommended for you", selected: true },
+            { weeks: wSteady, desc: "Steady pace" },
+            { weeks: wRelaxed, desc: "Relaxed learning" }
+        ];
+
+        let seen = new Set();
+        let uniqueOptions = [];
+        options.forEach(opt => {
+            if (!seen.has(opt.weeks)) {
+                seen.add(opt.weeks);
+                uniqueOptions.push(opt);
+            }
         });
-      }
 
-      const pdfDataUri = doc.output('datauristring');
-      const win = window.open();
-      if (win) {
-        win.document.write(`<iframe src="${pdfDataUri}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-      } else {
-        doc.save(`Tracker_${state.activeQuarter}.pdf`);
-      }
+        let foundSelected = false;
+        uniqueOptions.forEach(opt => {
+            if (opt.weeks === selectedWeeks) {
+                opt.selected = true;
+                foundSelected = true;
+            } else {
+                opt.selected = false;
+            }
+        });
+
+        if (!foundSelected && uniqueOptions.length > 0) {
+            uniqueOptions[2] = uniqueOptions[2] || uniqueOptions[0];
+            uniqueOptions[2].selected = true;
+            selectedWeeks = uniqueOptions[2].weeks;
+        }
+
+        const listContainer = document.getElementById('duration-options-list');
+        listContainer.innerHTML = '';
+
+        uniqueOptions.forEach(opt => {
+            const card = document.createElement('div');
+            card.className = `option-card ${opt.selected ? 'selected' : ''}`;
+            card.onclick = () => selectDuration(opt.weeks, card);
+            card.innerHTML = `
+                <div class="option-info">
+                    <span class="main-label">${opt.weeks} weeks</span>
+                    <span class="sub-label">${opt.desc} ${opt.weeks === wRec ? '⭐' : ''}</span>
+                </div>
+                <div class="radio-circle"></div>`;
+            listContainer.appendChild(card);
+        });
     }
 
-    function escapeHtml(str) {
-      return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    function selectDuration(weeks, el) {
+        selectedWeeks = weeks;
+        document.querySelectorAll('#duration-options-list .option-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
     }
 
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+    function toggleLesson(id) {
+        completedLessons[id] = !completedLessons[id];
+        
+        const pillEl = document.getElementById(`lesson-item-${id}`);
+        if (pillEl) {
+            if (completedLessons[id]) {
+                pillEl.classList.add('completed');
+            } else {
+                pillEl.classList.remove('completed');
+            }
+        }
+
+        updateGlobalProgress();
+        saveToLocalStorage();
+        checkAllCompleted();
+    }
+
+    function updateGlobalProgress() {
+        const completedCount = Object.keys(completedLessons).filter(k => completedLessons[k]).length;
+        const total = lessonsData.length;
+        const pct = Math.round((completedCount / total) * 100);
+
+        document.getElementById('global-progress-fill').style.width = pct + '%';
+        document.getElementById('global-progress-text').innerHTML = `<b>${pct}%</b> (${completedCount}/${total})`;
+    }
+
+    function toggleNoteInput(id, event) {
+        if (event) event.stopPropagation();
+        const noteContainer = document.getElementById(`lesson-note-container-${id}`);
+        if (noteContainer) {
+            noteContainer.classList.toggle('open');
+            if (noteContainer.classList.contains('open')) {
+                const editable = document.getElementById(`lesson-note-editable-${id}`);
+                if (editable) editable.focus();
+            }
+        }
+    }
+
+    function updateNote(id, htmlContent) {
+        lessonNotes[id] = htmlContent;
+        
+        const textOnly = htmlContent.replace(/<[^>]*>/g, '').trim();
+        const pillEl = document.getElementById(`lesson-item-${id}`);
+        const btnToggle = document.getElementById(`note-btn-icon-${id}`);
+        
+        if (pillEl) {
+            if (textOnly.length > 0) {
+                pillEl.classList.add('has-note');
+                if (btnToggle) btnToggle.innerText = '📄';
+            } else {
+                pillEl.classList.remove('has-note');
+                if (btnToggle) btnToggle.innerText = '✏️';
+            }
+        }
+
+        saveToLocalStorage();
+    }
+
+    function applyFormat(id, command, value = null) {
+        const editable = document.getElementById(`lesson-note-editable-${id}`);
+        if (!editable) return;
+        
+        editable.focus();
+        document.execCommand(command, false, value);
+        updateNote(id, editable.innerHTML);
+    }
+
+    function updateTextColor(id, color) {
+        const preview = document.getElementById(`text-color-preview-${id}`);
+        if (preview) {
+            preview.style.backgroundColor = color;
+        }
+        applyFormat(id, 'foreColor', color);
+    }
+
+    function updateBgColor(id, color) {
+        const preview = document.getElementById(`bg-color-preview-${id}`);
+        if (preview) {
+            preview.style.backgroundColor = color;
+        }
+        applyFormat(id, 'hiliteColor', color);
+    }
+
+    function markAllCompleted() {
+        lessonsData.forEach(item => {
+            completedLessons[item.id] = true;
+        });
+        updateGlobalProgress();
+        saveToLocalStorage();
+        renderStudyPlan();
+        goToStep(7);
+    }
+
+    function checkAllCompleted() {
+        const completedCount = Object.keys(completedLessons).filter(k => completedLessons[k]).length;
+        if (completedCount === lessonsData.length) {
+            setTimeout(() => goToStep(7), 400);
+        }
+    }
+
+    function saveAndRenderPlan() {
+        saveToLocalStorage();
+        renderStudyPlan();
+    }
+
+    function saveToLocalStorage() {
+        const data = {
+            hasPlan: true,
+            selectedWeeks: selectedWeeks,
+            startDate: startDateObj.toISOString(),
+            selectedDays: selectedDays,
+            completedLessons: completedLessons,
+            lessonNotes: lessonNotes
+        };
+        try {
+            localStorage.setItem('driving_plan_data', JSON.stringify(data));
+        } catch (e) {
+            console.error("Error al guardar en localStorage", e);
+        }
+    }
+
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('driving_plan_data');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                selectedWeeks = data.selectedWeeks;
+                startDateObj = new Date(data.startDate);
+                selectedDays = data.selectedDays || ['Mon', 'Tue', 'Thu', 'Fri'];
+                completedLessons = data.completedLessons || {};
+                lessonNotes = data.lessonNotes || {};
+                
+                const dayCards = document.querySelectorAll('#days-options-list .option-card');
+                const mapDayNames = { 'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6 };
+                dayCards.forEach((card, idx) => {
+                    const dayCode = Object.keys(mapDayNames).find(key => mapDayNames[key] === idx);
+                    if (selectedDays.includes(dayCode)) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                });
+
+                renderStudyPlan();
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function resetPlan() {
+        localStorage.removeItem('driving_plan_data');
+        completedLessons = {};
+        lessonNotes = {};
+        goToStep(1);
+    }
+
+    function renderStudyPlan() {
+        const container = document.getElementById('results-container');
+        container.innerHTML = '';
+
+        const totalStudyDays = selectedWeeks * selectedDays.length;
+        let lessonIdx = 0;
+
+        for (let w = 1; w <= selectedWeeks; w++) {
+            if (lessonIdx >= lessonsData.length) break;
+
+            const weekStart = new Date(startDateObj);
+            weekStart.setDate(startDateObj.getDate() + (w - 1) * 7);
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+
+            const dateRangeStr = `(${formatShortDate(weekStart)}-${formatShortDate(weekEnd)})`;
+            let daysHTML = '';
+
+            selectedDays.forEach((day, dayIdx) => {
+                const currentSlotNumber = ((w - 1) * selectedDays.length) + dayIdx;
+                const remainingSlots = Math.max(1, totalStudyDays - currentSlotNumber);
+                const remainingLessonsCount = lessonsData.length - lessonIdx;
+                
+                let countForThisDay = Math.ceil(remainingLessonsCount / remainingSlots);
+                if (countForThisDay < 0) countForThisDay = 0;
+
+                let itemsHTML = '';
+                for (let i = 0; i < countForThisDay; i++) {
+                    if (lessonIdx < lessonsData.length) {
+                        const item = lessonsData[lessonIdx];
+                        const colorClass = colorPalette[(item.id - 1) % colorPalette.length];
+                        const isCompleted = completedLessons[item.id] ? 'completed' : '';
+                        const currentNote = lessonNotes[item.id] || '';
+                        
+                        const textOnly = currentNote.replace(/<[^>]*>/g, '').trim();
+                        const hasNoteClass = textOnly.length > 0 ? 'has-note' : '';
+                        const iconSymbol = textOnly.length > 0 ? '📄' : '✏️️';
+                        
+                        itemsHTML += `
+                            <div class="lesson-container">
+                                <div class="lesson-pill ${colorClass} ${isCompleted} ${hasNoteClass}" id="lesson-item-${item.id}" onclick="toggleLesson(${item.id})">
+                                    <div class="checkbox-pill"></div>
+                                    <span class="lesson-text" style="flex:1">${item.name}</span>
+                                    <button class="btn-note-toggle" onclick="toggleNoteInput(${item.id}, event)" title="Ver/Editar nota"><span id="note-btn-icon-${item.id}">${iconSymbol}</span></button>
+                                </div>
+                                <div class="lesson-note-container" id="lesson-note-container-${item.id}">
+                                    <div class="lesson-note-editable" id="lesson-note-editable-${item.id}" contenteditable="true" oninput="updateNote(${item.id}, this.innerHTML)">${currentNote}</div>
+                                    <div class="note-toolbar">
+                                        <button class="tool-btn" onclick="applyFormat(${item.id}, 'bold')" title="Negrita"><b>B</b></button>
+                                        <button class="tool-btn" onclick="applyFormat(${item.id}, 'italic')" title="Cursiva"><i>I</i></button>
+                                        <button class="tool-btn" onclick="applyFormat(${item.id}, 'underline')" title="Subrayado"><u>U</u></button>
+                                        <button class="tool-btn" onclick="applyFormat(${item.id}, 'insertUnorderedList')" title="Lista">•</button>
+                                        <button class="tool-btn" onclick="applyFormat(${item.id}, 'undo')" title="Deshacer">↩</button>
+                                        <button class="tool-btn" onclick="applyFormat(${item.id}, 'redo')" title="Rehacer">↪</button>
+                                        
+                                        <div class="color-picker-wrapper" title="Color del texto">
+                                            <input type="color" class="color-picker-input" id="text-color-input-${item.id}" value="#ffffff" oninput="updateTextColor(${item.id}, this.value)">
+                                            <div class="color-picker-content">
+                                                <span style="font-size: 11px; font-weight: bold; margin-right: 2px;">A</span>
+                                                <div class="color-preview-circle" id="text-color-preview-${item.id}"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="color-picker-wrapper" title="Fondo del texto (Resaltado)">
+                                            <input type="color" class="color-picker-input" id="bg-color-input-${item.id}" value="#1d4ed8" oninput="updateBgColor(${item.id}, this.value)">
+                                            <div class="color-picker-content">
+                                                <span style="font-size: 11px; margin-right: 2px;">🖌️</span>
+                                                <div class="bg-preview-circle" id="bg-preview-circle-${item.id}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        lessonIdx++;
+                    }
+                }
+
+                if (itemsHTML !== '') {
+                    daysHTML += `
+                        <div class="day-row">
+                            <div class="day-col">
+                                <span class="day-label">${day.toUpperCase()}</span>
+                            </div>
+                            <div class="lessons-group">${itemsHTML}</div>
+                        </div>`;
+                }
+            });
+
+            const weekCard = document.createElement('div');
+            weekCard.className = 'week-card';
+            weekCard.innerHTML = `
+                <div class="week-header">
+                    <span class="week-title">Week ${w} <span style="font-weight: normal; color: var(--subtext); font-size: 14px;">${dateRangeStr}</span></span>
+                    <span class="week-badge">${selectedDays.length} study days</span>
+                </div>
+                ${daysHTML}`;
+
+            container.appendChild(weekCard);
+        }
+
+        updateGlobalProgress();
+        goToStep(6);
+    }
+
+    function openEditModal() {
+        document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function setExtraWeeks(w, el) {
+        tempWeeksToAdd = w;
+        document.querySelectorAll('#edit-modal .option-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+
+    function applyPlanAdjustment() {
+        selectedWeeks += tempWeeksToAdd;
+        document.getElementById('edit-modal').style.display = 'none';
+        saveAndRenderPlan();
+    }
+
+    initDates();
+    updateDurationOptions();
+
+    if (!loadFromLocalStorage()) {
+        goToStep(1);
+    }
+</script>
+
 </body>
 </html>
